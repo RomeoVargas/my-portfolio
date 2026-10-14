@@ -4,18 +4,15 @@ import Game from "./Game.jsx";
 import { Character } from "./WorldArt";
 import { EMAIL, services, projects, experience } from "./data";
 import "./styles.css";
+import "./cursor.css";
 
 function Icon({ name, ...props }) {
   const paths = {
     sound: "M11 5 6 9H3v6h3l5 4V5Zm4 3a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14",
     muted: "M11 5 6 9H3v6h3l5 4V5Zm5 4 5 6m0-6-5 6",
-    sun: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0-6v2m0 16v2M2 12h2m16 0h2M5 5l1 1m12 12 1 1M5 19l1-1M18 6l1-1",
-    moon: "M20 15A9 9 0 0 1 9 4a9 9 0 1 0 11 11Z",
     arrow: "M4 12h16m-6-6 6 6-6 6",
     mail: "M3 5h18v14H3V5Zm0 1 9 7 9-7",
     close: "m6 6 12 12M6 18 18 6",
-    pause: "M8 5v14m8-14v14",
-    play: "m7 4 13 8-13 8V4",
     download: "M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5",
   };
   return (
@@ -37,65 +34,138 @@ function Icon({ name, ...props }) {
 }
 
 function App() {
-  const [panel, setPanel] = useState(null);
+  const [panel, setPanel] = useState("welcome");
   const [service, setService] = useState(null);
   const [filter, setFilter] = useState("all");
-  const [visited, setVisited] = useState([]);
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const soundAllowed = useRef(true);
+  const clickSound = useRef(null);
+  const chimeAudio = useRef(null);
+  const [audioError, setAudioError] = useState("");
+  const music = useRef(null);
+  const soundRequest = useRef(0);
   const [motion, setMotion] = useState(
     () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
-  const [night, setNight] = useState(false);
   const [copyState, setCopyState] = useState("Copy email");
   const dialog = useRef(null),
     gameRef = useRef(null),
-    audio = useRef(null),
     lastFocus = useRef(null),
     timer = useRef(null);
-  function chime() {
-    if (!soundEnabled) return;
-    try {
-      const context =
-        audio.current ??
-        new (window.AudioContext || window.webkitAudioContext)();
-      audio.current = context;
-      void context.resume().catch(() => {});
-      [523.25, 659.25, 783.99].forEach((f, i) => {
-        const o = context.createOscillator(),
-          g = context.createGain();
-        o.type = "sine";
-        o.frequency.value = f;
-        o.connect(g);
-        g.connect(context.destination);
-        const t = context.currentTime + i * 0.07;
-        g.gain.setValueAtTime(0, t);
-        g.gain.linearRampToValueAtTime(0.045, t + 0.015);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
-        o.start(t);
-        o.stop(t + 0.23);
-      });
-    } catch {
+  function startMusic() {
+    const request = ++soundRequest.current;
+    const track = music.current;
+    track.volume = 0.25;
+    if (track.error) track.load();
+    void track.play().catch((error) => {
+      if (request !== soundRequest.current || !soundAllowed.current) return;
+      if (error.name !== "AbortError") {
+        track.pause();
+        soundAllowed.current = false;
+        setSoundEnabled(false);
+        setAudioError("Music couldn’t play. Try enabling sound again.");
+      }
+    });
+  }
+  function toggleSound() {
+    setAudioError("");
+    if (chimeAudio.current)
+      chimeAudio.current.gain.gain.value = soundAllowed.current ? 0 : 1;
+    if (soundAllowed.current) {
+      soundRequest.current += 1;
+      soundAllowed.current = false;
+      music.current.pause();
+      clickSound.current.pause();
       setSoundEnabled(false);
+    } else {
+      soundAllowed.current = true;
+      setSoundEnabled(true);
+      if (panel !== "welcome") startMusic();
     }
   }
+  function playChime() {
+    if (!soundAllowed.current) return;
+    try {
+      if (!chimeAudio.current) {
+        const context = new (
+          window.AudioContext || window.webkitAudioContext
+        )();
+        const gain = context.createGain();
+        gain.connect(context.destination);
+        chimeAudio.current = { context, gain };
+      }
+      const { context, gain } = chimeAudio.current;
+      void context.resume().catch(() => {});
+      [523.25, 659.25, 783.99].forEach((frequency, i) => {
+        const oscillator = context.createOscillator();
+        const envelope = context.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.value = frequency;
+        oscillator.connect(envelope);
+        envelope.connect(gain);
+        const time = context.currentTime + i * 0.07;
+        envelope.gain.setValueAtTime(0, time);
+        envelope.gain.linearRampToValueAtTime(0.045, time + 0.015);
+        envelope.gain.exponentialRampToValueAtTime(0.001, time + 0.22);
+        oscillator.onended = () => {
+          oscillator.disconnect();
+          envelope.disconnect();
+        };
+        oscillator.start(time);
+        oscillator.stop(time + 0.23);
+      });
+    } catch {
+      setAudioError(
+        "The star sound couldn’t play. You can still explore the site.",
+      );
+    }
+  }
+  function playClick() {
+    if (!soundAllowed.current) return;
+    const effect = clickSound.current;
+    effect.volume = 0.35;
+    effect.currentTime = 0;
+    void effect.play().catch((error) => {
+      if (error.name !== "AbortError" && error.name !== "NotAllowedError")
+        setAudioError(
+          "The click sound couldn’t play. You can still explore the site.",
+        );
+    });
+  }
+  useEffect(() => {
+    const track = music.current;
+    const effect = clickSound.current;
+    return () => {
+      soundRequest.current += 1;
+      track.pause();
+      effect.pause();
+      void chimeAudio.current?.context.close().catch(() => {});
+      chimeAudio.current = null;
+    };
+  }, []);
   function open(id, selected = null) {
+    playClick();
     lastFocus.current = document.activeElement;
     setService(selected);
     setFilter("all");
     setPanel(id);
-    chime();
-    if (["about", "services", "projects", "contact"].includes(id))
-      setVisited((v) => (v.includes(id) ? v : [...v, id]));
   }
   function close() {
+    if (panel === "welcome" && soundAllowed.current) startMusic();
+    playClick();
     dialog.current?.close();
     setPanel(null);
     setCopyState("Copy email");
-    lastFocus.current?.focus({ preventScroll: true });
+    if (panel === "welcome") explore();
+    else lastFocus.current?.focus({ preventScroll: true });
   }
   useEffect(() => {
     if (panel) {
       dialog.current.showModal();
+      if (panel === "welcome")
+        dialog.current
+          .querySelector(".primary-button")
+          .focus({ preventScroll: true });
       dialog.current.scrollTop = 0;
       document.body.style.overflow = "hidden";
     } else {
@@ -112,7 +182,6 @@ function App() {
     return () => {
       media.removeEventListener("change", change);
       clearTimeout(timer.current);
-      void audio.current?.close();
     };
   }, []);
   async function copyEmail() {
@@ -133,6 +202,7 @@ function App() {
     gameRef.current?.focus({ preventScroll: true });
   }
   const titles = {
+    welcome: "I’m Romeo Vargas Jr.",
     about: "Meet the maker.",
     services: service
       ? services.find((s) => s.id === service)?.title
@@ -141,8 +211,40 @@ function App() {
     contact: "Every great thing starts with hello.",
     help: "Your adventure starts here.",
   };
+  const soundLabel = soundEnabled ? "Mute sound" : "Enable sound";
+  const soundButton = (
+    <button
+      className="sound-toggle"
+      aria-label={soundLabel}
+      title={soundLabel}
+      aria-pressed={soundEnabled}
+      onClick={toggleSound}
+    >
+      <Icon name={soundEnabled ? "sound" : "muted"} />
+    </button>
+  );
   return (
     <>
+      <audio
+        ref={music}
+        data-audio="music"
+        src="/audio/background-music.mp3"
+        loop
+        preload="auto"
+        onError={() => {
+          soundAllowed.current = false;
+          soundRequest.current += 1;
+          clickSound.current?.pause();
+          setSoundEnabled(false);
+          setAudioError("Music couldn’t play. Try enabling sound again.");
+        }}
+      />
+      <audio
+        ref={clickSound}
+        data-audio="click"
+        src="/audio/click.mp3"
+        preload="auto"
+      />
       <a className="skip-link" href="#services">
         Skip to services
       </a>
@@ -167,9 +269,12 @@ function App() {
           <button onClick={() => open("projects")}>My work</button>
           <a href="#services">Services</a>
         </nav>
-        <button className="header-contact" onClick={() => open("contact")}>
-          Let’s talk <span>↗</span>
-        </button>
+        <div className="header-actions">
+          <button className="header-contact" onClick={() => open("contact")}>
+            Let’s talk <span>↗</span>
+          </button>
+          {soundButton}
+        </div>
       </header>
       <main id="home">
         <section className="hero" aria-labelledby="hero-title">
@@ -208,77 +313,46 @@ function App() {
             </div>
           </div>
           <Game
+            onCollect={playChime}
             onOpen={open}
             active={!panel}
             motion={motion}
-            sound={chime}
             gameRef={gameRef}
-            night={night}
           />
         </section>
         <div className="adventure-bar">
           <div className="controls-legend">
-            <span className="key-group">
-              <kbd>W</kbd>
-              <span>
-                <kbd>A</kbd>
-                <kbd>S</kbd>
-                <kbd>D</kbd>
+            <div className="legend-item">
+              <span className="key-group" aria-hidden="true">
+                <kbd>W</kbd>
+                <span>
+                  <kbd>A</kbd>
+                  <kbd>S</kbd>
+                  <kbd>D</kbd>
+                </span>
               </span>
-            </span>
-            <span>Move around</span>
-            <span className="legend-divider" />
-            <kbd>E</kbd>
-            <span>Interact</span>
-            <span className="mouse-symbol">↖</span>
-            <span>or click to explore</span>
-          </div>
-          <div className="exploration">
-            <span className="compass">✥</span>
-            <span>World explored</span>
-            <div
-              className="progress-track"
-              aria-label={`${visited.length} of 4 destinations explored`}
-              role="progressbar"
-              aria-valuenow={visited.length}
-              aria-valuemin="0"
-              aria-valuemax="4"
-            >
-              <span style={{ width: `${visited.length * 25}%` }} />
+              <span>
+                Move around
+                <span className="sr-only"> with WASD or arrow keys</span>
+              </span>
             </div>
-            <b>{visited.length}/4</b>
-          </div>
-          <div className="settings">
-            <button
-              aria-label={soundEnabled ? "Mute sound" : "Enable sound"}
-              title={soundEnabled ? "Mute sound" : "Enable sound"}
-              aria-pressed={soundEnabled}
-              onClick={() => setSoundEnabled(!soundEnabled)}
-            >
-              <Icon name={soundEnabled ? "sound" : "muted"} />
-            </button>
-            <button
-              aria-label={
-                motion ? "Pause ambient animation" : "Enable ambient animation"
-              }
-              title={
-                motion ? "Pause ambient animation" : "Enable ambient animation"
-              }
-              aria-pressed={!motion}
-              onClick={() => setMotion(!motion)}
-            >
-              <Icon name={motion ? "pause" : "play"} />
-            </button>
-            <button
-              aria-label={night ? "Switch to daytime" : "Switch to nighttime"}
-              title={night ? "Switch to daytime" : "Switch to nighttime"}
-              aria-pressed={night}
-              onClick={() => setNight(!night)}
-            >
-              <Icon name={night ? "moon" : "sun"} />
-            </button>
+            <div className="legend-item">
+              <kbd>E</kbd>
+              <span>Interact</span>
+            </div>
+            <div className="legend-item">
+              <span className="mouse-symbol" aria-hidden="true">
+                ↖
+              </span>
+              <span>Click or tap to explore</span>
+            </div>
           </div>
         </div>
+        {audioError && (
+          <p className="audio-status" role="status">
+            {audioError}
+          </p>
+        )}
         <section
           className="services-section"
           id="services"
@@ -341,7 +415,7 @@ function App() {
       </footer>
       <dialog
         ref={dialog}
-        className="content-dialog"
+        className={`content-dialog${panel === "welcome" ? " welcome-dialog" : ""}`}
         aria-labelledby="panel-title"
         onCancel={(e) => {
           e.preventDefault();
@@ -376,7 +450,34 @@ function App() {
               </button>
             </div>
             <div className="dialog-body">
+              {panel === "welcome" && (
+                <div className="welcome-avatar">
+                  <svg
+                    viewBox="-35 -55 70 75"
+                    role="img"
+                    aria-label="Romeo’s pixel avatar"
+                  >
+                    <Character />
+                  </svg>
+                  <span className="eyebrow">FULL-STACK DEVELOPER</span>
+                </div>
+              )}
               <h2 id="panel-title">{titles[panel]}</h2>
+              {panel === "welcome" && (
+                <>
+                  <p className="dialog-lead">
+                    I build websites, mobile apps, and custom systems, and help
+                    businesses shape their brand identity.
+                  </p>
+                  <p>
+                    Explore my world to see my projects, discover my services,
+                    and get to know the person behind the work.
+                  </p>
+                  <button className="primary-button" autoFocus onClick={close}>
+                    Explore my world <Icon name="arrow" />
+                  </button>
+                </>
+              )}
               {panel === "about" && (
                 <>
                   <p className="dialog-lead">
@@ -451,9 +552,6 @@ function App() {
                     className="primary-button"
                     onClick={() => {
                       setPanel("contact");
-                      setVisited((v) =>
-                        v.includes("contact") ? v : [...v, "contact"],
-                      );
                     }}
                   >
                     Let’s work together <Icon name="arrow" />
@@ -493,9 +591,6 @@ function App() {
                       className="primary-button"
                       onClick={() => {
                         setPanel("contact");
-                        setVisited((v) =>
-                          v.includes("contact") ? v : [...v, "contact"],
-                        );
                       }}
                     >
                       Discuss your project <Icon name="arrow" />
@@ -556,6 +651,15 @@ function App() {
                                 <span key={t}>{t}</span>
                               ))}
                             </div>
+                            <a
+                              className="project-link"
+                              href={p.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`Visit ${p.name} website (opens in a new tab)`}
+                            >
+                              Visit website <span aria-hidden="true">↗</span>
+                            </a>
                           </div>
                         </article>
                       ))}
@@ -654,8 +758,10 @@ function App() {
                       <div>
                         <h3>Make yourself at home</h3>
                         <p>
-                          The controls below the island switch sound, ambient
-                          animation, and day or night. Sound starts off. All
+                          Use the sound button in the top bar to mute music and
+                          popup sounds after closing this window. Music starts
+                          when you enter from the welcome screen. Animation
+                          respects your device’s reduced-motion preference. All
                           portfolio content is also available through the
                           navigation.
                         </p>
@@ -674,12 +780,14 @@ function App() {
                 </>
               )}
             </div>
-            <div className="dialog-footer">
-              <span>✦ A LITTLE CURIOSITY GOES A LONG WAY.</span>
-              <button onClick={close}>
-                Back to the island <span>↵</span>
-              </button>
-            </div>
+            {panel !== "welcome" && (
+              <div className="dialog-footer">
+                <span>✦ A LITTLE CURIOSITY GOES A LONG WAY.</span>
+                <button onClick={close}>
+                  Back to the island <span>↵</span>
+                </button>
+              </div>
+            )}
           </>
         )}
       </dialog>

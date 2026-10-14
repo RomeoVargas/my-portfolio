@@ -7,6 +7,10 @@ test("portfolio destinations, filters, keyboard movement and modal focus", async
   page.on("pageerror", (e) => errors.push(e.message));
   await page.setViewportSize({ width: 1440, height: 1050 });
   await page.goto("/");
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Explore my world", exact: true })
+    .click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "Real impact.",
   );
@@ -28,7 +32,7 @@ test("portfolio destinations, filters, keyboard movement and modal focus", async
     .click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Foodefy", exact: true }),
+    page.getByRole("heading", { name: "Pacific Wireless", exact: true }),
   ).toBeVisible();
   await expect(page.locator(".project-card h3").first()).toHaveText(
     "Paycoinect Nexus",
@@ -36,6 +40,30 @@ test("portfolio destinations, filters, keyboard movement and modal focus", async
   await expect(page.locator(".project-card h3").nth(1)).toHaveText(
     "Paycoinect",
   );
+  await expect(page.locator(".project-card")).toHaveCount(7);
+  await expect(
+    page.getByRole("heading", { name: "Foodefy", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "Brightest Skin", exact: true }),
+  ).toHaveCount(0);
+  const destinations = {
+    "Paycoinect Nexus": "https://nexus.paycoinect.com/",
+    Paycoinect: "https://paycoinect.com/",
+    "Pacific Wireless": "https://pacificwireless.com.ph/",
+    "Manila Fashion Festival": "https://mff-official.com/",
+    "Orthero Doctor’s Directory": "https://providers.orthero.ph/",
+    "Orthero Academy": "https://ortheroacademy.com/",
+    "New Life Church": "https://newlife.ph/",
+  };
+  for (const [name, url] of Object.entries(destinations)) {
+    const link = page.getByRole("link", {
+      name: `Visit ${name} website (opens in a new tab)`,
+      exact: true,
+    });
+    await expect(link).toHaveAttribute("href", url);
+    await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  }
   await page.getByRole("button", { name: "Mobile apps", exact: true }).click();
   await expect(page.locator(".project-card")).toHaveCount(1);
   await expect(
@@ -43,9 +71,9 @@ test("portfolio destinations, filters, keyboard movement and modal focus", async
   ).toBeVisible();
   await expect(page.locator(".project-card img")).toBeVisible();
   await page.getByRole("button", { name: "Websites", exact: true }).click();
-  await expect(page.locator(".project-card")).toHaveCount(4);
+  await expect(page.locator(".project-card")).toHaveCount(3);
   await expect(
-    page.getByRole("heading", { name: "Foodefy", exact: true }),
+    page.getByRole("heading", { name: "Pacific Wireless", exact: true }),
   ).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).not.toBeVisible();
@@ -61,10 +89,6 @@ test("portfolio destinations, filters, keyboard movement and modal focus", async
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.getByRole("button", { name: "Close dialog" }).click();
   }
-  await expect(page.getByRole("progressbar")).toHaveAttribute(
-    "aria-valuenow",
-    "4",
-  );
   await page.getByRole("button", { name: /Branding & identity/ }).click();
   await expect(
     page.getByRole("heading", { name: "Branding & identity", level: 2 }),
@@ -75,8 +99,7 @@ test("portfolio destinations, filters, keyboard movement and modal focus", async
     /^mailto:romeovillegasvargas@gmail.com/,
   );
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Switch to nighttime" }).click();
-  await expect(page.locator(".game-shell")).toHaveClass(/night/);
+  await page.getByRole("button", { name: "Mute sound" }).click();
   await page.getByRole("button", { name: "Enable sound" }).click();
   await expect(
     page.getByRole("button", { name: "Mute sound" }),
@@ -90,6 +113,10 @@ test("phone layout, touch controls, reduced motion and email fallback", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Explore my world", exact: true })
+    .click();
   await expect(page.locator(".game-shell")).toHaveClass(/still/);
   expect(
     await page.evaluate(
@@ -130,7 +157,19 @@ test("all five stars can be collected by walking and small screens do not overfl
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
+  await page.addInitScript(() => {
+    window.starNotes = [];
+    const start = OscillatorNode.prototype.start;
+    OscillatorNode.prototype.start = function (...args) {
+      window.starNotes.push(this.frequency.value);
+      return start.apply(this, args);
+    };
+  });
   await page.goto("/");
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Explore my world", exact: true })
+    .click();
   const map = page.locator(".game-map");
   await map.scrollIntoViewIfNeeded();
   const box = await map.boundingBox();
@@ -149,7 +188,20 @@ test("all five stars can be collected by walking and small screens do not overfl
     await expect(page.locator(".stars-counter b")).toHaveText(String(++count), {
       timeout: 5000,
     });
+    if (count === 1)
+      await page
+        .getByRole("button", { name: "Mute sound", exact: true })
+        .click();
+    if (count === 2) {
+      expect(await page.evaluate(() => window.starNotes.length)).toBe(3);
+      await page
+        .getByRole("button", { name: "Enable sound", exact: true })
+        .click();
+    }
   }
+  const notes = await page.evaluate(() => window.starNotes);
+  expect(notes).toHaveLength(12);
+  expect(notes.slice(0, 3).map(Math.round)).toEqual([523, 659, 784]);
   await expect(page.locator(".game-hint")).toContainText("All stars found");
   await page.setViewportSize({ width: 320, height: 700 });
   expect(
@@ -165,6 +217,10 @@ test("readable typography on desktop and phone, including enlarged text", async 
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Explore my world", exact: true })
+      .click();
     const smallText = await page
       .locator("body *")
       .evaluateAll((elements) =>
@@ -216,4 +272,104 @@ test("readable typography on desktop and phone, including enlarged text", async 
   await expect(
     page.getByRole("button", { name: "Close dialog" }),
   ).toBeVisible();
+});
+
+test("popup sound plays when opening a dialog and the game cursor has a motion fallback", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Explore my world", exact: true })
+    .click();
+  const click = page.locator('audio[data-audio="click"]');
+  await expect(click).toHaveAttribute("src", "/audio/click.mp3");
+  await page.getByRole("button", { name: "My work", exact: true }).click();
+  await expect
+    .poll(() => click.evaluate((el) => el.currentTime))
+    .toBeGreaterThan(0);
+  await page.keyboard.press("Escape");
+  expect(
+    await page
+      .locator(".game-map")
+      .evaluate((el) => getComputedStyle(el).cursor),
+  ).toContain("/cursors/ro-");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator(".game-shell")).toHaveClass(/still/);
+  expect(
+    await page
+      .locator(".game-map")
+      .evaluate((el) => getComputedStyle(el).cursor),
+  ).toContain("/cursors/ro-0.cur");
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.locator("footer").scrollIntoViewIfNeeded();
+  await expect(
+    page.getByRole("button", { name: "Mute sound", exact: true }),
+  ).toBeInViewport();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});
+
+test("music failure keeps the toggle honest and permits retry", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const play = HTMLMediaElement.prototype.play;
+    window.failMusic = true;
+    HTMLMediaElement.prototype.play = function () {
+      if (this.dataset.audio === "music" && window.failMusic)
+        return Promise.reject(
+          new DOMException("Unavailable", "NotSupportedError"),
+        );
+      return play.call(this);
+    };
+  });
+  await page.goto("/");
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Explore my world", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Enable sound", exact: true }),
+  ).toHaveAttribute("aria-pressed", "false");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Music couldn’t play" }),
+  ).toBeVisible();
+  await page.evaluate(() => (window.failMusic = false));
+  await page.getByRole("button", { name: "Enable sound", exact: true }).click();
+  await expect
+    .poll(() =>
+      page
+        .locator('audio[data-audio="music"]')
+        .evaluate((el) => el.currentTime),
+    )
+    .toBeGreaterThan(0);
+});
+
+test("search metadata and discovery files use the deployed portfolio URL", async ({
+  page,
+  request,
+}) => {
+  const url = "https://my-portfolio.romeovillegasvargas.workers.dev/";
+  await page.goto("/");
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Explore my world", exact: true })
+    .click();
+  await expect(page).toHaveTitle(
+    "Romeo Vargas Jr. | Full-Stack Developer in the Philippines",
+  );
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    url,
+  );
+  const robots = await request.get("/robots.txt");
+  expect(robots.status()).toBe(200);
+  expect(await robots.text()).toContain(`Sitemap: ${url}sitemap.xml`);
+  const sitemap = await request.get("/sitemap.xml");
+  expect(sitemap.status()).toBe(200);
+  expect(await sitemap.text()).toContain(`<loc>${url}</loc>`);
 });

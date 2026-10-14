@@ -51,6 +51,7 @@ export const projects = [
     description:
       "A merchant platform connecting business onboarding and verification with deposits, withdrawals, inventory, and point of sale. A React web app and integration APIs bring those workflows together, with real-time status updates.",
     tags: ["React", "Node.js", "MongoDB", "Socket.IO"],
+    url: "https://nexus.paycoinect.com/",
   },
   {
     name: "Paycoinect",
@@ -61,16 +62,18 @@ export const projects = [
     description:
       "A digital wallet ecosystem with a Flutter mobile app and a React web portal. Features include cash-in, payment requests, QR receiving, account management, and rewards, backed by Node.js services.",
     tags: ["Flutter", "Dart", "React", "Node.js", "MongoDB"],
+    url: "https://paycoinect.com/",
   },
   {
-    name: "Foodefy",
+    name: "Pacific Wireless",
     category: "Custom systems",
     type: "systems",
-    glyph: "🍜",
-    color: "orange",
+    glyph: "PW",
+    color: "yellow",
     description:
-      "Online inventory, ordering, and delivery in one system. Google Maps calculates delivery fees, with PayPal handling online transactions.",
-    tags: ["Laravel", "MySQL", "Google Maps", "PayPal"],
+      "A custom system for Pacific Wireless, built entirely by me as the sole developer.",
+    tags: ["Custom system", "Solo development"],
+    url: "https://pacificwireless.com.ph/",
   },
   {
     name: "Manila Fashion Festival",
@@ -81,6 +84,7 @@ export const projects = [
     description:
       "An events showcase and portfolio platform for designers and models, with custom content management. Built from scratch and deployed to hosting.",
     tags: ["Laravel", "Vue.js", "MySQL"],
+    url: "https://mff-official.com/",
   },
   {
     name: "Orthero Doctor’s Directory",
@@ -91,6 +95,7 @@ export const projects = [
     description:
       "A searchable provider directory connected to Google Maps, with geolocation, directions, places, and geocoding integrations.",
     tags: ["Laravel", "Vue.js", "Google Maps"],
+    url: "https://providers.orthero.ph/",
   },
   {
     name: "Orthero Academy",
@@ -101,16 +106,7 @@ export const projects = [
     description:
       "An online training and course platform built on the existing provider directory, with Paymongo payments and WordPress course pages.",
     tags: ["WordPress", "Elementor Pro", "Paymongo"],
-  },
-  {
-    name: "Brightest Skin",
-    category: "Websites",
-    type: "web",
-    glyph: "bs.",
-    color: "yellow",
-    description:
-      "A public website, reseller directory, and virtual ID generator, connecting location services with a custom Laravel and Vue application.",
-    tags: ["Laravel", "Vue.js", "WordPress"],
+    url: "https://ortheroacademy.com/",
   },
   {
     name: "New Life Church",
@@ -121,6 +117,7 @@ export const projects = [
     description:
       "A church portfolio website built with WordPress and Elementor Pro.",
     tags: ["WordPress", "Elementor Pro"],
+    url: "https://newlife.ph/",
   },
 ];
 export const experience = [

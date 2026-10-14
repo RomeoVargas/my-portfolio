@@ -22,7 +22,7 @@ spacing:
 
 ## Overview
 
-An English-language portfolio for prospective clients and employers. A cozy handheld adventure game, set on a floating developer island, is the signature. Professional content stays accessible through ordinary buttons and navigation; playing is optional. Experience comes from the supplied sResume.pdf, plus the local PAYCOINECT-Nexus and PAYCOINECT-main repositories for recent product work. No invented client outcomes or testimonials.
+An English-language portfolio for prospective clients and employers. A cozy handheld adventure game, set on a floating developer island, is the signature. Professional content stays accessible through ordinary buttons and navigation; playing is optional. Experience comes from the supplied sResume.pdf, plus the local PAYCOINECT-Nexus and PAYCOINECT-main repositories for recent product work. Pacific Wireless’s solo-development credit and all project URLs come from the owner. No invented client outcomes or testimonials.
 
 ## Colors
 
@@ -46,8 +46,10 @@ Rounded UI panels, squared keycaps, pixel-cut illustration outlines.
 
 ## Components
 
-Native buttons and links. A single native modal dialog owns focus trapping, Escape, and return focus for services, projects, resume, contact, and help. Character input only captures movement while the game has focus. Touch controls and direct destination buttons provide alternatives. The island uses a pointer cursor and a visible click/tap instruction so movement and building interactions are discoverable before playing. Sound is opt-in. Motion can be paused and respects reduced-motion preferences.
+Native buttons and links. A single native modal dialog owns focus trapping, Escape, and return focus for services, projects, resume, contact, and help. Character input only captures movement while the game has focus. Touch controls and direct destination buttons provide alternatives. The island uses the supplied animated cursor with a standard pointer fallback, freezes it when reduced motion is preferred, and has a visible click/tap instruction so movement and building interactions are discoverable before playing. Sound defaults to enabled; a welcome dialog with the pixel avatar and “Explore my world” button supplies the gesture to begin playback. A persistent icon-only control only in the sticky header controls looping music and click effects; muting stops both, and enabling resumes music. Effects play only when popups open or close. An explicit mute stays muted. Media failures reset the toggle and show a readable retry message. Motion respects reduced-motion preferences. The island instruction row spans the full width with movement, interaction, and click/tap guidance; progress and scene settings are omitted.
 
 ## Do's and Don'ts
 
 Keep original resume private: omit street address, personal demographic data, and references. Show an email contact action, not a pretend submission form. Use supplied brand artwork for Nexus and Paycoinect; keep other project representations illustrative. Do not gate content behind game progress. Do not imply resume employment dates have been independently updated.
+
+Star collection plays the original three-note synthesized chime, separate from the popup MP3. The header mute control silences it too.

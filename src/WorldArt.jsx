@@ -54,7 +54,6 @@ export default function WorldArt({
   facing,
   collected,
   sparks,
-  night,
 }) {
   return (
     <svg className="world-art" viewBox="0 0 900 600" aria-hidden="true">
@@ -242,10 +241,7 @@ export default function WorldArt({
         <path d="M199 217h19v39h-19z" fill="#886a61" />
         <rect x="214" y="236" width="3" height="3" fill="#f4d78b" />
         <path d="M152 198h27v28h-27zm80 0h27v28h-27z" fill="#886b67" />
-        <path
-          d="M156 202h19v20h-19zm80 0h19v20h-19z"
-          fill={night ? "#f5d789" : "#a7c4bd"}
-        />
+        <path d="M156 202h19v20h-19zm80 0h19v20h-19z" fill="#a7c4bd" />
         <path
           d="M165 202v20m80-20v20m-89-10h19m61 0h19"
           stroke="#e8cda6"

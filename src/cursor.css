@@ -1,0 +1,56 @@
+/* Extracted unchanged from Ro Normal Select.ani: 32px frames, (0, 0) hotspot. */
+.game-shell {
+  cursor:
+    url("/cursors/ro-0.cur") 0 0,
+    pointer;
+}
+.game-shell .game-map,
+.game-shell button,
+.game-shell a {
+  cursor: inherit;
+}
+@media (hover: hover) and (pointer: fine) {
+  .game-shell {
+    animation: ro-cursor 1s step-end infinite;
+  }
+  .game-shell.still {
+    animation: none;
+  }
+}
+@keyframes ro-cursor {
+  0% {
+    cursor:
+      url("/cursors/ro-0.cur") 0 0,
+      pointer;
+  }
+  50% {
+    cursor:
+      url("/cursors/ro-1.cur") 0 0,
+      pointer;
+  }
+  60% {
+    cursor:
+      url("/cursors/ro-2.cur") 0 0,
+      pointer;
+  }
+  70% {
+    cursor:
+      url("/cursors/ro-3.cur") 0 0,
+      pointer;
+  }
+  80% {
+    cursor:
+      url("/cursors/ro-4.cur") 0 0,
+      pointer;
+  }
+  90% {
+    cursor:
+      url("/cursors/ro-5.cur") 0 0,
+      pointer;
+  }
+  100% {
+    cursor:
+      url("/cursors/ro-0.cur") 0 0,
+      pointer;
+  }
+}

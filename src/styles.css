@@ -413,9 +413,6 @@ main {
   background: #9ccbb4;
   box-shadow: 0 0 8px #9ccbb466;
 }
-.world-name {
-  color: var(--muted);
-}
 .stars-counter {
   color: var(--accent);
   display: flex;
@@ -575,20 +572,8 @@ main {
 .touch-controls {
   display: none;
 }
-.night {
-  background: radial-gradient(ellipse at 55% 49%, #292942 0%, #191c30 80%);
-}
-.night .island {
-  filter: brightness(0.82) saturate(0.78);
-}
-.night .sky-stars {
-  opacity: 1;
-}
 .sky-stars {
   opacity: 0.5;
-}
-.night .spark {
-  filter: drop-shadow(0 0 7px #ffe4a1);
 }
 @keyframes bob {
   50% {
@@ -658,10 +643,19 @@ main {
   flex-wrap: wrap;
 }
 .controls-legend {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  gap: 24px;
+}
+.legend-item {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 12px;
+}
+.legend-item + .legend-item {
+  border-left: 1px solid var(--line);
 }
 .key-group {
   display: flex;
@@ -692,69 +686,9 @@ kbd {
   height: 1.75rem;
   font-size: 1rem;
 }
-.legend-divider {
-  width: 1px;
-  height: 23px;
-  background: var(--line);
-  margin: 0 7px;
-}
 .mouse-symbol {
   font-size: 1.4375rem;
-  margin-left: 13px;
   color: #c0bad4;
-}
-.exploration {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.compass {
-  color: var(--primary);
-  font-size: 1.3125rem;
-}
-.progress-track {
-  width: 76px;
-  height: 5px;
-  background: #34354b;
-  border-radius: 3px;
-  overflow: hidden;
-}
-.progress-track > span {
-  display: block;
-  height: 100%;
-  background: var(--primary);
-  transition: width 0.3s;
-}
-.exploration b {
-  font-size: 1rem;
-  color: var(--primary);
-  font-weight: 400;
-}
-.settings {
-  display: flex;
-  gap: 3px;
-  align-items: center;
-}
-.settings button {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  display: grid;
-  place-items: center;
-  color: #b7b3ca;
-  min-width: 48px;
-}
-.settings button:hover {
-  background: #30334b;
-  color: var(--accent);
-}
-.settings button[aria-pressed="true"] {
-  color: var(--accent);
-  background: #2d2d43;
-}
-.settings svg {
-  width: 17px;
-  height: 17px;
 }
 .services-section {
   padding: 48px 0 35px;
@@ -1459,9 +1393,6 @@ footer button:hover {
   .adventure-bar {
     font-size: 1rem;
   }
-  .exploration {
-    gap: 7px;
-  }
   .service-card h3 {
     font-size: 1.375rem;
   }
@@ -1526,9 +1457,6 @@ footer button:hover {
   .adventure-bar {
     flex-wrap: wrap;
     row-gap: 15px;
-  }
-  .exploration {
-    margin-left: auto;
   }
   .controls-legend {
     font-size: 1rem;
@@ -1624,9 +1552,6 @@ footer button:hover {
     padding: 0 12px;
     height: 40px;
   }
-  .world-name {
-    display: none;
-  }
   .stars-counter {
     font-size: 1rem;
   }
@@ -1698,22 +1623,16 @@ footer button:hover {
     gap: 10px;
   }
   .controls-legend {
-    display: none;
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
-  .exploration {
-    margin-left: 0;
-    font-size: 1rem;
-    gap: 7px;
+  .legend-item {
+    justify-content: flex-start;
   }
-  .progress-track {
-    width: 50px;
+  .legend-item + .legend-item {
+    border-left: 0;
   }
-  .settings {
-    gap: 0;
-  }
-  .settings button {
-    width: 31px;
-  }
+
   .section-heading {
     align-items: flex-start;
     gap: 10px;
@@ -1905,9 +1824,6 @@ footer button:hover {
     scrollbar-color: auto;
   }
   .status-light,
-  .progress-track > span {
-    background: Highlight;
-  }
   .destination > span,
   .primary-button,
   .service-card,
@@ -1930,11 +1846,6 @@ footer button:hover {
 
 .mobile-destinations {
   display: none;
-}
-@media (max-width: 1190px) {
-  .world-name {
-    display: none;
-  }
 }
 @media (max-width: 1000px) {
   .hero-intro {
@@ -2033,5 +1944,134 @@ footer button:hover {
   .contact-strip > button {
     margin-left: 0;
     min-height: 48px;
+  }
+}
+
+.project-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  margin-top: 16px;
+  color: var(--primary);
+  font-size: 1rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.project-link:hover {
+  color: var(--accent);
+}
+.audio-status {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 1.125rem;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--background);
+  box-shadow: 0 6px 20px #0a0c1b33;
+}
+html {
+  scroll-padding-top: 125px;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.sound-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 48px;
+  min-height: 48px;
+  width: 48px;
+  padding: 12px;
+  border: 1px solid var(--primary);
+  border-radius: 28px;
+  background: #38304d;
+  color: var(--text);
+  font-size: 1rem;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px #0a0c1b44;
+  flex-shrink: 0;
+}
+.sound-toggle:hover {
+  background: #514268;
+  color: var(--accent);
+}
+.sound-toggle[aria-pressed="true"] {
+  color: var(--accent);
+}
+.dialog-top {
+  gap: 12px;
+  background: var(--background);
+  flex-wrap: wrap;
+}
+.dialog-top > .eyebrow {
+  margin-right: auto;
+}
+@media (max-width: 650px) {
+  html {
+    scroll-padding-top: 180px;
+  }
+  .site-header {
+    padding-inline: 16px;
+    gap: 12px;
+  }
+  .header-actions {
+    gap: 8px;
+  }
+  .header-contact {
+    gap: 6px;
+  }
+  .dialog-top > .eyebrow {
+    flex-basis: 100%;
+  }
+}
+
+.welcome-dialog {
+  max-width: 640px;
+}
+.welcome-dialog .dialog-body {
+  text-align: center;
+}
+.welcome-avatar {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.welcome-avatar svg {
+  width: 140px;
+  height: 150px;
+  border-radius: 50%;
+  background: #39354d;
+}
+.welcome-dialog .primary-button {
+  margin: 24px auto 16px;
+}
+
+@media (max-width: 650px) {
+  .welcome-avatar {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .welcome-avatar svg {
+    width: 80px;
+    height: 86px;
+  }
+  .welcome-dialog .dialog-body {
+    padding: 20px;
+  }
+  .welcome-dialog .primary-button {
+    margin-top: 16px;
   }
 }

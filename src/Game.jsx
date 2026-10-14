@@ -10,14 +10,7 @@ import {
   isWalkable,
 } from "./world.js";
 
-export default function Game({
-  onOpen,
-  active,
-  motion,
-  sound,
-  gameRef,
-  night,
-}) {
+export default function Game({ onOpen, onCollect, active, motion, gameRef }) {
   const [player, setPlayer] = useState(START);
   const [pet, setPet] = useState({ x: 407, y: 400 });
   const [moving, setMoving] = useState(false);
@@ -28,8 +21,8 @@ export default function Game({
   const companion = useRef({ x: 407, y: 400 });
   const target = useRef(null);
   const collection = useRef([]);
-  const soundRef = useRef(sound);
-  soundRef.current = sound;
+  const onCollectRef = useRef(onCollect);
+  onCollectRef.current = onCollect;
   const nearest = nearestStation(player);
   useEffect(() => {
     const clear = () => {
@@ -88,7 +81,7 @@ export default function Game({
         if (next !== collection.current) {
           collection.current = next;
           setCollected(next);
-          soundRef.current();
+          onCollectRef.current();
         }
       } else setMoving(false);
       const p = position.current,
@@ -149,13 +142,10 @@ export default function Game({
     if (isWalkable(point)) target.current = point;
   }
   return (
-    <div
-      className={`game-shell ${motion ? "" : "still"} ${night ? "night" : ""}`}
-    >
+    <div className={`game-shell ${motion ? "" : "still"}`}>
       <div className="world-topline">
         <span>
-          <i /> WORLD 01{" "}
-          <span className="world-name">/ THE MAKER’S ISLAND</span>
+          <i /> THE MAKER'S ISLAND
         </span>
         <span
           className="stars-counter"
@@ -181,7 +171,6 @@ export default function Game({
             facing={facing}
             collected={collected}
             sparks={SPARKS}
-            night={night}
           />
           {STATIONS.map((s) => (
             <button
