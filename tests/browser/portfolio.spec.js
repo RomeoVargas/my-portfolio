@@ -34,13 +34,13 @@ test("portfolio destinations, filters, keyboard movement and modal focus", async
   await expect(
     page.getByRole("heading", { name: "Pacific Wireless", exact: true }),
   ).toBeVisible();
-  await expect(page.locator(".project-card h3").first()).toHaveText(
+  await expect(page.getByRole("dialog").locator(".project-card h3").first()).toHaveText(
     "Paycoinect Nexus",
   );
-  await expect(page.locator(".project-card h3").nth(1)).toHaveText(
+  await expect(page.getByRole("dialog").locator(".project-card h3").nth(1)).toHaveText(
     "Paycoinect",
   );
-  await expect(page.locator(".project-card")).toHaveCount(7);
+  await expect(page.getByRole("dialog").locator(".project-card")).toHaveCount(7);
   await expect(
     page.getByRole("heading", { name: "Foodefy", exact: true }),
   ).toHaveCount(0);
@@ -57,7 +57,7 @@ test("portfolio destinations, filters, keyboard movement and modal focus", async
     "New Life Church": "https://newlife.ph/",
   };
   for (const [name, url] of Object.entries(destinations)) {
-    const link = page.getByRole("link", {
+    const link = page.getByRole("dialog").getByRole("link", {
       name: `Visit ${name} website (opens in a new tab)`,
       exact: true,
     });
@@ -65,13 +65,13 @@ test("portfolio destinations, filters, keyboard movement and modal focus", async
     await expect(link).toHaveAttribute("rel", "noopener noreferrer");
   }
   await page.getByRole("button", { name: "Mobile apps", exact: true }).click();
-  await expect(page.locator(".project-card")).toHaveCount(1);
+  await expect(page.getByRole("dialog").locator(".project-card")).toHaveCount(1);
   await expect(
-    page.getByRole("heading", { name: "Paycoinect", exact: true }),
+    page.getByRole("dialog").getByRole("heading", { name: "Paycoinect", exact: true }),
   ).toBeVisible();
-  await expect(page.locator(".project-card img")).toBeVisible();
+  await expect(page.getByRole("dialog").locator(".project-card img")).toBeVisible();
   await page.getByRole("button", { name: "Websites", exact: true }).click();
-  await expect(page.locator(".project-card")).toHaveCount(3);
+  await expect(page.getByRole("dialog").locator(".project-card")).toHaveCount(3);
   await expect(
     page.getByRole("heading", { name: "Pacific Wireless", exact: true }),
   ).toHaveCount(0);

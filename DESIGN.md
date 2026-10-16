@@ -34,7 +34,9 @@ Readability is a user requirement. Use 18px-equivalent (1.125rem) body text and 
 
 ## Layout
 
-An approximately 1400px centered shell. Header, split introduction and playable scene, navigation dock, services, and a compact contact footer. Collapse the split at 1000px; preserve the map’s aspect ratio. Content dialogs scroll within the viewport.
+An approximately 1400px centered shell. Header, split introduction and playable scene, navigation dock, services with full descriptions, selected work, and a compact contact footer with a direct email link. Selected work reuses the dialog project cards in three columns on desktop and one column at 1000px and below. Collapse the hero split at 1000px; preserve the map’s aspect ratio. Content dialogs scroll within the viewport.
+
+The homepage is prerendered at build time, including service descriptions, selected projects, and contact information, so those details are available without JavaScript. Keep this content shared with the interactive views. The welcome dialog also offers “View services & work,” which closes the popup and navigates to the service section without moving focus to the game. The established colors and typefaces remain the design system for these sections.
 
 ## Elevation & Depth
 

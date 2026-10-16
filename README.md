@@ -33,11 +33,13 @@ npm run build
 npm run test:browser
 ```
 
-Browser tests use installed Google Chrome and the local preview on port 5174. No hosting deployment is configured.
+Browser tests use installed Google Chrome and the production preview on port 5174. Run `npm run build`, then start `npm run preview -- --port 5174 --strictPort` in another terminal before running browser tests. No hosting deployment is configured.
 
 ## Search and deployment
 
 The page title, description, canonical URL, and Open Graph text identify Romeo Vargas Jr. as a full-stack developer in the Philippines. `public/robots.txt` references `public/sitemap.xml`, which lists the single portfolio homepage. External project sites are not pages of this portfolio and are not included in its sitemap.
+
+`npm run build` now prerenders the React homepage into `dist/index.html` using `scripts/prerender.mjs`. Deploy the complete `dist/` directory using this build command. Service descriptions, selected projects, and the direct email link are readable without JavaScript; React hydrates the same content to enable the island and dialogs. Both project views reuse `src/ProjectCard.jsx` and content from `src/data.js`. The welcome dialog offers “View services & work” for visitors who want to browse directly. The development server remains client-rendered, so verify search visibility against the production build.
 
 The canonical production URL is `https://my-portfolio.romeovillegasvargas.workers.dev/`. If the portfolio moves to a custom domain, update `index.html`, `public/robots.txt`, and `public/sitemap.xml` together. After deploying, register the site in Google Search Console, submit `sitemap.xml`, and inspect the homepage. No verification token or Search Console registration is configured here.
 

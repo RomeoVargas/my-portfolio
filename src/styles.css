@@ -726,6 +726,9 @@ kbd {
   gap: 15px;
 }
 .service-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   position: relative;
   text-align: left;
   border: 1px solid var(--line);
@@ -803,6 +806,7 @@ kbd {
   min-height: 0;
 }
 .service-bottom {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   border-top: 1px solid #36374a;
@@ -1133,7 +1137,7 @@ footer button:hover {
 }
 .projects-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 17px;
 }
 .project-card {
@@ -2073,5 +2077,34 @@ html {
   }
   .welcome-dialog .primary-button {
     margin-top: 16px;
+  }
+}
+
+.selected-work {
+  padding: 16px 0 48px;
+  scroll-margin-top: 25px;
+}
+.selected-work .projects-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.hero-intro > .project-link {
+  display: block;
+  width: fit-content;
+  margin-bottom: 20px;
+}
+.contact-strip > div {
+  min-width: 0;
+}
+.contact-email {
+  overflow-wrap: anywhere;
+}
+.welcome-services {
+  display: block;
+  width: fit-content;
+  margin: 20px auto 0;
+}
+@media (max-width: 1000px) {
+  .selected-work .projects-grid {
+    grid-template-columns: 1fr;
   }
 }
