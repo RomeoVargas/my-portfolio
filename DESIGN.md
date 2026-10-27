@@ -38,6 +38,8 @@ An approximately 1400px centered shell. Header, split introduction and playable 
 
 The homepage is prerendered at build time, including service descriptions, selected projects, and contact information, so those details are available without JavaScript. Keep this content shared with the interactive views. The welcome dialog also offers “View services & work,” which closes the popup and navigates to the service section without moving focus to the game. The established colors and typefaces remain the design system for these sections.
 
+Each homepage service card is a “Read more” link to a dedicated, prerendered service page. These pages use DM Sans for reading, the service’s existing accent color, a split introduction and fit panel, scope bullets, related project cards with contribution notes, a short getting-started sequence, and email contact. The island remains the homepage signature; service pages open directly without a welcome dialog or game. On mobile the service header is non-sticky to preserve reading space, and the introduction stacks vertically. Breadcrumbs, related work, contact, and other-service links provide ordinary navigation. Match the owner-confirmed service assignments across pages and filters, including projects with multiple services.
+
 ## Elevation & Depth
 
 Subtle panel outlines and dark shadows. Pixel illustrations use stepped silhouettes and layered flat color, never glass effects. World art stays restrained around functional labels.

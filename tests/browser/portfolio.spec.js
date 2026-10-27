@@ -40,7 +40,7 @@ test("portfolio destinations, filters, keyboard movement and modal focus", async
   await expect(page.getByRole("dialog").locator(".project-card h3").nth(1)).toHaveText(
     "Paycoinect",
   );
-  await expect(page.getByRole("dialog").locator(".project-card")).toHaveCount(7);
+  await expect(page.getByRole("dialog").locator(".project-card")).toHaveCount(9);
   await expect(
     page.getByRole("heading", { name: "Foodefy", exact: true }),
   ).toHaveCount(0);
@@ -55,6 +55,8 @@ test("portfolio destinations, filters, keyboard movement and modal focus", async
     "Orthero Doctor’s Directory": "https://providers.orthero.ph/",
     "Orthero Academy": "https://ortheroacademy.com/",
     "New Life Church": "https://newlife.ph/",
+    "MBS Alert": "https://staging-bsarescue.hexacodetech.com/",
+    "Paycoinect Business": "https://biz.paycoinect.com/",
   };
   for (const [name, url] of Object.entries(destinations)) {
     const link = page.getByRole("dialog").getByRole("link", {
@@ -65,16 +67,20 @@ test("portfolio destinations, filters, keyboard movement and modal focus", async
     await expect(link).toHaveAttribute("rel", "noopener noreferrer");
   }
   await page.getByRole("button", { name: "Mobile apps", exact: true }).click();
-  await expect(page.getByRole("dialog").locator(".project-card")).toHaveCount(1);
+  await expect(page.getByRole("dialog").locator(".project-card")).toHaveCount(2);
   await expect(
     page.getByRole("dialog").getByRole("heading", { name: "Paycoinect", exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("dialog").locator(".project-card img")).toBeVisible();
   await page.getByRole("button", { name: "Websites", exact: true }).click();
-  await expect(page.getByRole("dialog").locator(".project-card")).toHaveCount(3);
+  await expect(page.getByRole("dialog").locator(".project-card")).toHaveCount(9);
   await expect(
     page.getByRole("heading", { name: "Pacific Wireless", exact: true }),
-  ).toHaveCount(0);
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Branding & identity", exact: true }).click();
+  await expect(page.getByRole("dialog").locator(".project-card")).toHaveCount(5);
+  await page.getByRole("button", { name: "Custom systems", exact: true }).click();
+  await expect(page.getByRole("dialog").locator(".project-card")).toHaveCount(5);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).not.toBeVisible();
   await expect(
@@ -89,10 +95,10 @@ test("portfolio destinations, filters, keyboard movement and modal focus", async
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.getByRole("button", { name: "Close dialog" }).click();
   }
-  await page.getByRole("button", { name: /Branding & identity/ }).click();
+  await page.getByRole("button", { name: "Explore The studio: services", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Branding & identity", level: 2 }),
-  ).toBeVisible();
+    page.getByRole("dialog").getByRole("link", { name: /Read more about Branding & identity/ }),
+  ).toHaveAttribute("href", "/services/branding-identity/");
   await page.getByRole("button", { name: "Discuss your project" }).click();
   await expect(page.getByRole("link", { name: "Open email" })).toHaveAttribute(
     "href",

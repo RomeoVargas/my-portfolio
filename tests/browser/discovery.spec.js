@@ -28,7 +28,7 @@ test("welcome offers direct access to services and hydrated projects still open"
   await expect(page.locator("#services")).toBeFocused();
   await expect(page.locator(".game-shell")).toHaveClass(/still/);
   await page.getByRole("button", { name: "View all projects" }).click();
-  await expect(page.getByRole("dialog").locator(".project-card")).toHaveCount(7);
+  await expect(page.getByRole("dialog").locator(".project-card")).toHaveCount(9);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("button", { name: "View all projects" })).toBeFocused();
   expect(errors).toEqual([]);

@@ -374,19 +374,20 @@ export default function App() {
           </div>
           <div className="service-grid">
             {services.map((s) => (
-              <button
+              <a
                 key={s.id}
                 className={`service-card ${s.color}`}
-                onClick={() => open("services", s.id)}
+                href={s.path}
+                aria-label={`Read more about ${s.title}`}
               >
                 <span className="service-icon">{s.icon}</span>
                 <span className="card-arrow">↗</span>
                 <h3>{s.title}</h3>
                 <p>{s.description}</p>
                 <span className="service-bottom">
-                  Explore service <span>→</span>
+                  Read more <span>→</span>
                 </span>
-              </button>
+              </a>
             ))}
           </div>
         </section>
@@ -620,6 +621,9 @@ export default function App() {
                               <span key={t}>{t}</span>
                             ))}
                           </div>
+                          <a className="project-link" href={s.path}>
+                            Read more about {s.title} →
+                          </a>
                         </article>
                       ))}
                   </div>
@@ -648,6 +652,7 @@ export default function App() {
                   <div className="filter-bar" aria-label="Filter projects">
                     {[
                       ["all", "All projects"],
+                      ["branding", "Branding & identity"],
                       ["web", "Websites"],
                       ["systems", "Custom systems"],
                       ["mobile", "Mobile apps"],
@@ -663,7 +668,7 @@ export default function App() {
                   </div>
                   <div className="projects-grid">
                     {projects
-                      .filter((p) => filter === "all" || p.type === filter)
+                      .filter((p) => filter === "all" || p.serviceIds.includes(filter))
                       .map((p) => (
                         <ProjectCard key={p.name} project={p} />
                       ))}
