@@ -3,6 +3,7 @@ import Game from "./Game.jsx";
 import ProjectCard from "./ProjectCard.jsx";
 import { Character } from "./WorldArt";
 import { EMAIL, services, projects, experience } from "./data";
+import { demos } from "./demos";
 
 function Icon({ name, ...props }) {
   const paths = {
@@ -409,6 +410,27 @@ export default function App() {
                 ["Paycoinect Nexus", "Paycoinect", "Manila Fashion Festival"].includes(p.name),
               )
               .map((p) => <ProjectCard key={p.name} project={p} />)}
+          </div>
+        </section>
+        <section className="demos-section" id="demos" aria-labelledby="demos-title">
+          <div className="section-heading">
+            <div>
+              <div className="eyebrow">INTERACTIVE DEMOS</div>
+              <h2 id="demos-title">Websites built for <span>your industry.</span></h2>
+            </div>
+            <a className="secondary-button" href="/demos/">
+              Browse all <Icon name="arrow" />
+            </a>
+          </div>
+          <div className="demo-grid">
+            {demos.map(d => (
+              <a key={d.id} className={`demo-card demo-${d.id}`} href={d.path}>
+                <span className="demo-card-industry">{d.industry}</span>
+                <h3>{d.name}</h3>
+                <p>{d.tagline}</p>
+                <span className="demo-card-cta">Explore demo <span>↗</span></span>
+              </a>
+            ))}
           </div>
         </section>
         <section

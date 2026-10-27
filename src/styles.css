@@ -2242,3 +2242,120 @@ html {
     padding: 20px;
   }
 }
+
+/* Demo banner (shared across all demo pages) */
+.demo-banner-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #0f0f1a;
+  border-bottom: 1px solid #2a2a3e;
+  font-size: 1rem;
+}
+.demo-banner-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.demo-badge {
+  background: #b7a0f4;
+  color: #0f0f1a;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+}
+.demo-banner-inner > span {
+  color: #888;
+}
+.demo-banner-inner strong {
+  color: #ccc;
+}
+.demo-banner-bar nav {
+  margin-left: auto;
+  display: flex;
+  gap: 16px;
+}
+.demo-banner-bar a {
+  color: #b7a0f4;
+}
+.demo-banner-bar a:hover {
+  color: #f8d581;
+}
+
+/* Demo section on main portfolio page */
+.demos-section {
+  padding: 16px 0 48px;
+  border-top: 1px solid var(--line);
+}
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 15px;
+}
+.demo-card {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--demo-bg, #1a1a2e);
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  min-height: 170px;
+}
+.demo-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--demo-accent, var(--primary));
+  box-shadow: 0 8px 30px var(--demo-glow, #b7a0f416);
+}
+.demo-card:active {
+  transform: translateY(-1px);
+}
+.demo-card-industry {
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  color: var(--demo-accent, var(--primary));
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.demo-card h3 {
+  font-size: 1.375rem;
+  font-weight: 600;
+  margin-top: 10px;
+  letter-spacing: -0.3px;
+}
+.demo-card p {
+  color: var(--muted);
+  margin-top: 4px;
+  font-size: 1.125rem;
+  font-style: italic;
+}
+.demo-card-cta {
+  margin-top: auto;
+  padding-top: 16px;
+  color: var(--demo-accent, var(--primary));
+  font-size: 1rem;
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #36374a;
+}
+.demo-auto-dealership { --demo-accent: #00d4ff; --demo-bg: #0a1520; --demo-glow: #00d4ff22; }
+.demo-restaurant { --demo-accent: #e8843c; --demo-bg: #1a1008; --demo-glow: #e8843c22; }
+.demo-real-estate { --demo-accent: #3b82f6; --demo-bg: #0a1025; --demo-glow: #3b82f622; }
+.demo-fitness-gym { --demo-accent: #ef4444; --demo-bg: #1a0a0a; --demo-glow: #ef444422; }
+.demo-beauty-salon { --demo-accent: #c084fc; --demo-bg: #1a0a20; --demo-glow: #c084fc22; }
+
+@media (max-width: 650px) {
+  .demo-grid {
+    grid-template-columns: 1fr;
+  }
+  .demo-banner-inner {
+    padding: 8px 16px;
+    font-size: 1rem;
+  }
+}
