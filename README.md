@@ -33,7 +33,7 @@ npm run build
 npm run test:browser
 ```
 
-Browser tests use installed Google Chrome and the production preview on port 5174. Run `npm run build`, then start `npm run preview -- --port 5174 --strictPort` in another terminal before running browser tests. No hosting deployment is configured.
+Browser tests use installed Google Chrome and the production preview on port 5174. Run `npm run build`, then start `npm run preview -- --port 5174 --strictPort` in another terminal before running browser tests. Cloudflare Workers deployment is configured in `wrangler.json` to serve `dist/`. Use `npm run build` as the build command and `npx wrangler deploy` as the deploy command.
 
 ## Search and deployment
 
