@@ -14,13 +14,10 @@ const server = await createServer({
   appType: "custom",
 });
 try {
-  const { default: App } = await server.ssrLoadModule("/src/App.jsx");
   const { default: ServicePage } = await server.ssrLoadModule("/src/ServicePage.jsx");
-  const html = await readFile("dist/index.html", "utf8");
+  const html = await readFile("dist/index.react.html", "utf8");
   const placeholder = '<div id="root"></div>';
   assert(html.includes(placeholder), "Built HTML must contain an empty React root");
-  const content = renderToString(createElement(App));
-  await writeFile("dist/index.html", html.replace(placeholder, () => `<div id="root">${content}</div>`));
   for (const service of services) {
     const url = `https://my-portfolio.romeovillegasvargas.workers.dev${service.path}`;
     let page = html.replace(/<title>[\s\S]*?<\/title>/, () => `<title>${escapeHtml(service.pageTitle)}</title>`);
@@ -41,7 +38,7 @@ try {
     await mkdir(directory, { recursive: true });
     await writeFile(`${directory}index.html`, page);
   }
-  console.log(`Prerendered homepage and ${services.length} service pages`);
+  console.log(`Prerendered ${services.length} service pages`);
 } finally {
   await server.close();
 }

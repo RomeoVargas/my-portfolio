@@ -3,6 +3,11 @@ import { resolve } from "path";
 import { existsSync } from "fs";
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      input: [resolve("index.html"), resolve("index.react.html")],
+    },
+  },
   plugins: [
     {
       name: "serve-static-demos",
