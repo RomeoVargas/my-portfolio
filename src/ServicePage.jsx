@@ -15,7 +15,7 @@ export default function ServicePage({ service }) {
           <span>romeo’s<span className="brand-world">world<span className="brand-dot">.</span></span></span>
         </a>
         <nav aria-label="Service navigation">
-          <a href="/#services">All services</a>
+          <a href="/#capabilities">All services</a>
           <a href="#service-projects">Related work</a>
           <a href="#service-contact">Contact</a>
         </nav>
@@ -23,7 +23,7 @@ export default function ServicePage({ service }) {
       <main className={`service-page ${service.color}`} id="service-content">
         <nav className="service-breadcrumb" aria-label="Breadcrumb">
           <a href="/">Home</a><span aria-hidden="true">/</span>
-          <a href="/#services">Services</a><span aria-hidden="true">/</span>
+          <a href="/#capabilities">Services</a><span aria-hidden="true">/</span>
           <span aria-current="page">{service.title}</span>
         </nav>
         <section className="service-hero" aria-labelledby="service-heading">

@@ -32,6 +32,20 @@ try {
       page = page.replace(tag, () => `<meta ${attribute}="${name}" content="${escapeHtml(value)}" />`);
     }
     page = page.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/, () => `<link rel="canonical" href="${url}" />`);
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      name: service.heading,
+      description: service.summary,
+      url,
+      provider: {
+        "@type": "Person",
+        "@id": "https://my-portfolio.romeovillegasvargas.workers.dev/#romeo",
+        name: "Romeo Vargas Jr.",
+        url: "https://my-portfolio.romeovillegasvargas.workers.dev/",
+      },
+    };
+    page = page.replace("</head>", () => `<script type="application/ld+json">${JSON.stringify(schema).replaceAll("<", "\\u003c")}</script></head>`);
     const markup = renderToString(createElement(ServicePage, { service }));
     page = page.replace(placeholder, () => `<div id="root">${markup}</div>`);
     const directory = `dist${service.path}`;

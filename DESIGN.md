@@ -57,3 +57,7 @@ Native buttons and links. A single native modal dialog owns focus trapping, Esca
 Keep original resume private: omit street address, personal demographic data, and references. Show an email contact action, not a pretend submission form. Use supplied brand artwork for Nexus and Paycoinect; keep other project representations illustrative. Do not gate content behind game progress. Do not imply resume employment dates have been independently updated.
 
 Star collection plays the original three-note synthesized chime, separate from the popup MP3. The header mute control silences it too.
+
+## Current static homepage and search discovery
+
+The current homepage is the static 8B-derived `index.html`, with Gabarito display type, Onest body type, white surfaces, and purple accents. Preserve its animated Hello artwork; the adjacent visible introduction is the descriptive H1. Service links use the existing `m-link` treatment in each service card and point to the four prerendered React service pages. Their All services links return to `/#capabilities`. Canonical URLs use the current workers.dev origin. Fictional business demos stay available for visitors with `noindex, follow`; legacy portfolio HTML URLs redirect to the homepage. Structured data describes only existing person and service content.
