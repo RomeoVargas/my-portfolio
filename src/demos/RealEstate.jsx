@@ -1,279 +1,332 @@
-import React, { useState, useRef, useMemo } from "react";
+import { createScene, THREE } from "./three-setup.js";
+import React, { useEffect, useRef, useState } from "react";
 import DemoShell from "./DemoShell.jsx";
 
-const PROPERTIES = [
-  { id: 1, name: "Modern Hillside Villa", address: "742 Oak Crest Dr", price: 875000, beds: 4, baths: 3, sqft: 3200, type: "House", grad: "135deg, #1a3a5c, #0d2240" },
-  { id: 2, name: "Downtown Loft", address: "88 Market St #12", price: 425000, beds: 2, baths: 2, sqft: 1100, type: "Condo", grad: "200deg, #2a1a3e, #14102a" },
-  { id: 3, name: "Lakeside Retreat", address: "15 Clearwater Ln", price: 1250000, beds: 5, baths: 4, sqft: 4800, type: "House", grad: "160deg, #0c2a2a, #081e1e" },
-  { id: 4, name: "Urban Studio", address: "200 Central Ave #4B", price: 289000, beds: 1, baths: 1, sqft: 650, type: "Apartment", grad: "180deg, #2a2015, #1a140c" },
-  { id: 5, name: "Family Farmhouse", address: "3001 Country Rd", price: 545000, beds: 4, baths: 2, sqft: 2400, type: "House", grad: "145deg, #1a2a10, #0e1a08" },
-  { id: 6, name: "Coastal Penthouse", address: "1 Ocean Blvd #PH", price: 2100000, beds: 3, baths: 3, sqft: 2800, type: "Condo", grad: "170deg, #0a1a30, #061228" },
-];
+function CityScene() {
+  const canvasRef = useRef();
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = createScene(canvas, {
+      bloom: true,
+      bloomStrength: 0.8,
+      bloomRadius: 0.3,
+      bloomThreshold: 0.7,
+      orbit: true,
+      autoRotate: true,
+      autoRotateSpeed: 0.2,
+      background: 0x040810,
+      fog: 0.02,
+      fov: 50,
+      exposure: 1.0,
+    });
+    const { scene, camera, controls, start, dispose } = ctx;
 
-const PRICE_RANGES = [
-  { label: "Any Price", min: 0, max: Infinity },
-  { label: "$200k – $400k", min: 200000, max: 400000 },
-  { label: "$400k – $600k", min: 400000, max: 600000 },
-  { label: "$600k – $1M", min: 600000, max: 1000000 },
-  { label: "$1M+", min: 1000000, max: Infinity },
-];
+    camera.position.set(12, 8, 15);
+    camera.lookAt(0, 3, 0);
+    controls.target.set(0, 3, 0);
+    controls.maxPolarAngle = Math.PI / 2.2;
+    controls.minPolarAngle = 0.3;
 
-const TYPES = ["All", "House", "Condo", "Apartment", "Townhouse"];
+    // ground
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(60, 60),
+      new THREE.MeshStandardMaterial({ color: 0x080a0f, metalness: 0.4, roughness: 0.6 }),
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
 
-const NEIGHBORHOODS = [
-  { name: "Riverside Heights", desc: "Tree-lined streets, top-rated schools, and a growing arts district. Perfect for families.", avg: "$620k" },
-  { name: "Downtown Core", desc: "Walkable urban living with dining, nightlife, and transit at your doorstep.", avg: "$480k" },
-  { name: "Coastal Drive", desc: "Oceanfront luxury with panoramic views, private beach access, and resort-style amenities.", avg: "$1.8M" },
-];
+    // roads
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x101318, roughness: 0.8 });
+    for (const offset of [-6, 0, 6]) {
+      const h = new THREE.Mesh(new THREE.PlaneGeometry(60, 1.2), roadMat);
+      h.rotation.x = -Math.PI / 2;
+      h.position.set(0, 0.005, offset);
+      scene.add(h);
+      const v = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 60), roadMat);
+      v.rotation.x = -Math.PI / 2;
+      v.position.set(offset, 0.005, 0);
+      scene.add(v);
+    }
 
-function fmt(n) {
-  return n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+    // seeded random
+    let seed = 42;
+    const rand = () => { seed = (seed * 16807 + 0) % 2147483647; return (seed - 1) / 2147483646; };
+
+    const windowColors = [0xffdd88, 0xfff4cc, 0xffaa44, 0xffe8a0];
+
+    // buildings
+    const buildingGroup = new THREE.Group();
+    for (let i = 0; i < 55; i++) {
+      const w = 0.5 + rand() * 1.5;
+      const d = 0.5 + rand() * 1.5;
+      const bh = 1 + rand() * 11;
+      const bx = (rand() - 0.5) * 28;
+      const bz = (rand() - 0.5) * 28;
+      if ([-6, 0, 6].some((r) => Math.abs(bx - r) < 1.2 || Math.abs(bz - r) < 1.2)) continue;
+
+      const shade = 0x0a0f1a + Math.floor(rand() * 0x0a0f16);
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(w, bh, d),
+        new THREE.MeshStandardMaterial({ color: shade, roughness: 0.7, metalness: 0.3 }),
+      );
+      mesh.position.set(bx, bh / 2, bz);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      buildingGroup.add(mesh);
+
+      // windows on each face
+      const faces = [
+        { axis: "x", dir: 1, rot: [0, Math.PI / 2, 0] },
+        { axis: "x", dir: -1, rot: [0, -Math.PI / 2, 0] },
+        { axis: "z", dir: 1, rot: [0, 0, 0] },
+        { axis: "z", dir: -1, rot: [0, Math.PI, 0] },
+      ];
+      const winGeo = new THREE.PlaneGeometry(0.08, 0.06);
+      const floorH = 0.35;
+      const floors = Math.floor(bh / floorH);
+      for (const face of faces) {
+        const faceW = face.axis === "x" ? d : w;
+        const cols = Math.max(1, Math.floor(faceW / 0.18));
+        for (let fl = 1; fl < floors; fl++) {
+          for (let c = 0; c < cols; c++) {
+            if (rand() > 0.3) continue;
+            const winMat = new THREE.MeshBasicMaterial({ color: windowColors[Math.floor(rand() * windowColors.length)] });
+            const win = new THREE.Mesh(winGeo, winMat);
+            const fy = fl * floorH - bh / 2 + 0.1;
+            const fx = (c - (cols - 1) / 2) * 0.18;
+            if (face.axis === "x") {
+              win.position.set(bx + face.dir * (w / 2 + 0.003), fy + bh / 2, bz + fx);
+            } else {
+              win.position.set(bx + fx, fy + bh / 2, bz + face.dir * (d / 2 + 0.003));
+            }
+            win.rotation.set(...face.rot);
+            buildingGroup.add(win);
+          }
+        }
+      }
+    }
+    scene.add(buildingGroup);
+
+    // featured building
+    const featH = 8;
+    const feat = new THREE.Mesh(
+      new THREE.BoxGeometry(2.2, featH, 2.2),
+      new THREE.MeshStandardMaterial({ color: 0x1a2a4a, roughness: 0.5, metalness: 0.4 }),
+    );
+    feat.position.set(0, featH / 2, -3);
+    feat.castShadow = true;
+    scene.add(feat);
+    const fwinGeo = new THREE.PlaneGeometry(0.1, 0.08);
+    for (let fl = 0; fl < 18; fl++) {
+      for (let c = 0; c < 8; c++) {
+        if (rand() > 0.5) continue;
+        const mat = new THREE.MeshBasicMaterial({ color: 0x88ccff });
+        const side = c < 4 ? 1 : -1;
+        const col = c % 4;
+        const win = new THREE.Mesh(fwinGeo, mat);
+        win.position.set((col - 1.5) * 0.25, 0.5 + fl * 0.4, -3 + side * 1.103);
+        if (side === -1) win.rotation.y = Math.PI;
+        scene.add(win);
+      }
+    }
+    const featSpot = new THREE.SpotLight(0x3b82f6, 30, 20, Math.PI / 6, 0.5);
+    featSpot.position.set(3, 12, 0);
+    featSpot.target = feat;
+    scene.add(featSpot);
+
+    // lighting
+    scene.add(new THREE.AmbientLight(0x0a1020, 0.3));
+    const moon = new THREE.DirectionalLight(0x4466aa, 0.5);
+    moon.position.set(10, 15, 5);
+    scene.add(moon);
+    for (const pos of [[3, 0.5, 0], [-3, 0.5, 0], [0, 0.5, 3], [0, 0.5, -8]]) {
+      scene.add(Object.assign(new THREE.PointLight(0xffaa55, 5, 4), { position: new THREE.Vector3(...pos) }));
+    }
+
+    // stars
+    const starGeo = new THREE.BufferGeometry();
+    const starPos = new Float32Array(300 * 3);
+    for (let i = 0; i < 300; i++) {
+      const theta = rand() * Math.PI * 2;
+      const phi = rand() * Math.PI * 0.45;
+      const r = 40 + rand() * 30;
+      starPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      starPos[i * 3 + 1] = r * Math.cos(phi);
+      starPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+    }
+    starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
+    scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.06 })));
+
+    start(() => {});
+    return dispose;
+  }, []);
+  return <canvas ref={canvasRef} className="dre-canvas" />;
 }
 
-function PropertyCard({ p }) {
-  const ref = useRef(null);
-  const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
+const PROPERTIES = [
+  { name: "Modern Hillside Villa", addr: "742 Oak Crest Dr", price: 875000, beds: 4, baths: 3, sqft: 3200, type: "House", grad: "135deg, #1a3050, #0c1a30" },
+  { name: "Downtown Loft", addr: "88 Market St #12", price: 425000, beds: 2, baths: 2, sqft: 1100, type: "Condo", grad: "135deg, #2a1a30, #150c20" },
+  { name: "Lakeside Retreat", addr: "15 Clearwater Ln", price: 1250000, beds: 5, baths: 4, sqft: 4800, type: "House", grad: "135deg, #0c2030, #081520" },
+  { name: "Urban Studio", addr: "200 Central Ave #4B", price: 289000, beds: 1, baths: 1, sqft: 650, type: "Apartment", grad: "135deg, #1a2040, #0c1020" },
+  { name: "Family Farmhouse", addr: "3001 Country Rd", price: 545000, beds: 4, baths: 2, sqft: 2400, type: "House", grad: "135deg, #1a2a20, #0c1a10" },
+  { name: "Coastal Penthouse", addr: "1 Ocean Blvd #PH", price: 2100000, beds: 3, baths: 3, sqft: 2800, type: "Condo", grad: "135deg, #102040, #081030" },
+];
+const RANGES = [["Any",0,Infinity],["Under $400k",0,400000],["$400k–$700k",400000,700000],["$700k–$1.2M",700000,1200000],["$1.2M+",1200000,Infinity]];
+function fmt(n){return n.toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0})}
 
-  function onMove(e) {
-    const rect = ref.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setTilt({ rx: y * -12, ry: x * 12 });
-  }
-
-  return (
-    <div
-      ref={ref}
-      className="dre-card"
-      style={{ transform: `perspective(800px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)` }}
-      onPointerMove={onMove}
-      onPointerLeave={() => setTilt({ rx: 0, ry: 0 })}
-    >
-      <div className="dre-card-img" style={{ background: `linear-gradient(${p.grad})` }}>
-        <span className="dre-badge-sale">For Sale</span>
-      </div>
-      <div className="dre-card-body">
+function PropertyCard({p}){
+  const ref=useRef();
+  const [tilt,setTilt]=useState({rx:0,ry:0});
+  return(
+    <article ref={ref} className="dre-prop"
+      onPointerMove={e=>{const r=ref.current.getBoundingClientRect();setTilt({rx:((e.clientY-r.top)/r.height-0.5)*-8,ry:((e.clientX-r.left)/r.width-0.5)*8})}}
+      onPointerLeave={()=>setTilt({rx:0,ry:0})}
+      style={{transform:`perspective(800px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`}}>
+      <div className="dre-prop-img" style={{background:`linear-gradient(${p.grad})`}}><span className="dre-badge">For Sale</span></div>
+      <div className="dre-prop-body">
         <h3>{p.name}</h3>
-        <p className="dre-address">{p.address}</p>
-        <p className="dre-price">${fmt(p.price)}</p>
-        <div className="dre-specs">
-          <span>{p.beds} bed</span>
-          <span>{p.baths} bath</span>
-          <span>{fmt(p.sqft)} sqft</span>
-        </div>
+        <p className="dre-addr">{p.addr}</p>
+        <span className="dre-price">{fmt(p.price)}</span>
+        <div className="dre-specs"><span>{p.beds} Bed</span><span>{p.baths} Bath</span><span>{p.sqft.toLocaleString()} sqft</span></div>
       </div>
-    </div>
+    </article>
   );
 }
 
-export default function RealEstate() {
-  const [typeFilter, setTypeFilter] = useState("All");
-  const [priceIdx, setPriceIdx] = useState(0);
-  const [query, setQuery] = useState("");
+function MortgageCalc(){
+  const [price,setPrice]=useState(500000);
+  const [down,setDown]=useState(20);
+  const [rate,setRate]=useState(6.5);
+  const [term,setTerm]=useState(30);
+  const loan=price*(1-down/100);
+  const mr=rate/100/12;
+  const n=term*12;
+  const monthly=mr>0?loan*(mr*Math.pow(1+mr,n))/(Math.pow(1+mr,n)-1):loan/n;
+  const tax=price*0.012/12;
+  return(
+    <section className="dre-calc">
+      <h2>Mortgage Calculator</h2>
+      <div className="dre-calc-grid">
+        <div className="dre-calc-inputs">
+          <label>Home Price: <strong>{fmt(price)}</strong><input type="range" min={100000} max={3000000} step={10000} value={price} onChange={e=>setPrice(+e.target.value)}/></label>
+          <label>Down Payment: <strong>{down}%</strong><input type="range" min={0} max={50} value={down} onChange={e=>setDown(+e.target.value)}/></label>
+          <label>Interest Rate: <strong>{rate}%</strong><input type="range" min={2} max={12} step={0.1} value={rate} onChange={e=>setRate(+e.target.value)}/></label>
+          <div className="dre-term"><span>Loan Term:</span>{[15,30].map(t=><button key={t} className={term===t?"active":""} onClick={()=>setTerm(t)}>{t} yr</button>)}</div>
+        </div>
+        <div className="dre-calc-result">
+          <span className="dre-calc-label">Estimated Monthly Payment</span>
+          <span className="dre-calc-amount">{fmt(Math.round(monthly+tax))}</span>
+          <div className="dre-calc-breakdown">
+            <span>Principal & Interest: {fmt(Math.round(monthly))}</span>
+            <span>Est. Property Tax: {fmt(Math.round(tax))}</span>
+            <span>Loan Amount: {fmt(Math.round(loan))}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-  const [homePrice, setHomePrice] = useState(500000);
-  const [downPct, setDownPct] = useState(20);
-  const [rate, setRate] = useState(6.5);
-  const [term, setTerm] = useState(30);
+const HOODS=[
+  {name:"Riverside Heights",desc:"Tree-lined streets and top-rated schools. A neighborhood built for families.",avg:"$620,000"},
+  {name:"Downtown Core",desc:"Walk to everything. Restaurants, nightlife, and culture at your doorstep.",avg:"$480,000"},
+  {name:"Coastal Drive",desc:"Ocean views and luxury living along the waterfront.",avg:"$1,400,000"},
+];
 
-  const filtered = useMemo(() => {
-    const range = PRICE_RANGES[priceIdx];
-    return PROPERTIES.filter(p => {
-      if (typeFilter !== "All" && p.type !== typeFilter) return false;
-      if (p.price < range.min || p.price > range.max) return false;
-      if (query && !p.name.toLowerCase().includes(query.toLowerCase()) && !p.address.toLowerCase().includes(query.toLowerCase())) return false;
-      return true;
-    });
-  }, [typeFilter, priceIdx, query]);
-
-  const mortgage = useMemo(() => {
-    const principal = homePrice * (1 - downPct / 100);
-    const monthlyRate = rate / 100 / 12;
-    const n = term * 12;
-    const pi = monthlyRate > 0
-      ? (principal * monthlyRate * Math.pow(1 + monthlyRate, n)) / (Math.pow(1 + monthlyRate, n) - 1)
-      : principal / n;
-    const tax = homePrice * 0.012 / 12;
-    return { pi, tax, total: pi + tax };
-  }, [homePrice, downPct, rate, term]);
-
-  return (
+export default function RealEstate(){
+  const [typeFilter,setTypeFilter]=useState("Any");
+  const [rangeIdx,setRangeIdx]=useState(0);
+  const filtered=PROPERTIES.filter(p=>(typeFilter==="Any"||p.type===typeFilter)&&p.price>=RANGES[rangeIdx][1]&&p.price<RANGES[rangeIdx][2]);
+  return(
     <DemoShell industry="Real Estate">
       <style>{`
-        .dre-page{--blue:#3b82f6;--green:#10b981;--bg:#0c1222;--surface:#111827;--border:#1e293b;--text:#e8ecf4;--muted:#94a3b8;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-        .dre-wrap{max-width:1200px;margin:0 auto;padding:0 32px}
-        .dre-hero{text-align:center;padding:72px 32px 56px}
-        .dre-hero-eyebrow{font-size:1rem;letter-spacing:.12em;color:var(--blue);font-weight:600;text-transform:uppercase}
-        .dre-hero h1{font-size:clamp(2.25rem,5vw,3.5rem);font-weight:800;letter-spacing:-.04em;margin:16px 0 12px;line-height:1.1}
-        .dre-hero h1 span{color:var(--blue)}
-        .dre-hero p{color:var(--muted);font-size:1.25rem;margin-bottom:36px}
-        .dre-search{display:flex;gap:10px;max-width:800px;margin:0 auto;flex-wrap:wrap}
-        .dre-search input,.dre-search select{flex:1;min-width:140px;padding:14px 16px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:1rem}
-        .dre-search input::placeholder{color:var(--muted)}
-        .dre-search select{cursor:pointer}
-        .dre-search-btn{padding:14px 28px;background:var(--blue);color:#fff;border:0;border-radius:8px;font-weight:700;font-size:1rem;cursor:pointer;white-space:nowrap}
-        .dre-search-btn:hover{background:#2563eb}
-        .dre-section{padding:56px 0}
-        .dre-section-title{font-size:1.5rem;font-weight:700;margin-bottom:8px;letter-spacing:-.02em}
-        .dre-section-sub{color:var(--muted);margin-bottom:32px;font-size:1.125rem}
-        .dre-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
-        .dre-card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface);transition:transform .25s ease,box-shadow .25s ease;will-change:transform;cursor:default}
-        .dre-card:hover{box-shadow:0 16px 48px #3b82f622}
-        .dre-card-img{height:180px;position:relative;display:flex;align-items:flex-start;justify-content:flex-end;padding:14px}
-        .dre-badge-sale{background:var(--green);color:#fff;padding:4px 12px;border-radius:6px;font-size:.875rem;font-weight:700;letter-spacing:.02em}
-        .dre-card-body{padding:20px}
-        .dre-card-body h3{font-size:1.25rem;font-weight:700;margin-bottom:4px}
-        .dre-address{color:var(--muted);font-size:.9375rem;margin-bottom:10px}
-        .dre-price{font-size:1.5rem;font-weight:800;color:var(--blue);margin-bottom:12px}
-        .dre-specs{display:flex;gap:16px;color:var(--muted);font-size:.9375rem}
-        .dre-specs span{display:flex;align-items:center;gap:4px}
-        .dre-specs span::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--border)}
-        .dre-specs span:first-child::before{display:none}
-        .dre-empty{grid-column:1/-1;text-align:center;padding:48px 0;color:var(--muted);font-size:1.125rem}
-
-        .dre-calc{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
-        .dre-calc-inputs{display:flex;flex-direction:column;gap:24px}
-        .dre-field label{display:block;font-size:.9375rem;color:var(--muted);margin-bottom:8px}
-        .dre-field-row{display:flex;align-items:center;gap:12px}
-        .dre-field input[type=range]{flex:1;accent-color:var(--blue);height:6px}
-        .dre-field-val{min-width:80px;text-align:right;font-weight:700;font-size:1rem;font-variant-numeric:tabular-nums}
-        .dre-term-row{display:flex;gap:12px}
-        .dre-term-btn{padding:10px 20px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--muted);font-size:1rem;cursor:pointer}
-        .dre-term-btn[data-active=true]{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
-        .dre-result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px;text-align:center}
-        .dre-result-label{font-size:1rem;color:var(--muted);margin-bottom:8px}
-        .dre-result-amount{font-size:clamp(2.5rem,5vw,3.5rem);font-weight:800;color:var(--green);margin-bottom:24px;font-variant-numeric:tabular-nums}
-        .dre-result-amount span{font-size:1.25rem;color:var(--muted);font-weight:400;margin-left:4px}
-        .dre-breakdown{display:grid;gap:12px;text-align:left}
-        .dre-breakdown-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:.9375rem}
-        .dre-breakdown-row:last-child{border:0;font-weight:700;color:var(--text)}
-        .dre-breakdown-row span:first-child{color:var(--muted)}
-        .dre-breakdown-row:last-child span:first-child{color:var(--text)}
-
-        .dre-hoods{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-        .dre-hood{padding:28px;border:1px solid var(--border);border-radius:12px;background:var(--surface);transition:border-color .2s}
-        .dre-hood:hover{border-color:var(--blue)}
-        .dre-hood h3{font-size:1.25rem;font-weight:700;margin-bottom:8px}
-        .dre-hood p{color:var(--muted);font-size:.9375rem;line-height:1.65;margin-bottom:16px}
-        .dre-hood-avg{font-size:1.125rem;font-weight:700;color:var(--blue)}
-        .dre-hood-avg span{font-size:.875rem;color:var(--muted);font-weight:400;margin-left:4px}
-
-        .dre-cta{text-align:center;padding:64px 32px;border-top:1px solid var(--border);margin-top:24px}
-        .dre-cta h2{font-size:2rem;font-weight:800;margin-bottom:12px}
-        .dre-cta p{color:var(--muted);font-size:1.125rem;margin-bottom:28px}
-        .dre-cta-btn{display:inline-flex;align-items:center;gap:12px;background:var(--blue);color:#fff;padding:16px 32px;border-radius:10px;font-size:1.125rem;font-weight:700}
-        .dre-cta-btn:hover{background:#2563eb}
-
-        .dre-footer{max-width:1200px;margin:0 auto;padding:24px 32px;border-top:1px solid var(--border);display:flex;justify-content:space-between;color:var(--muted);font-size:.875rem;flex-wrap:wrap;gap:12px}
-        .dre-footer a{color:var(--blue)}
-
-        @media(max-width:768px){
-          .dre-wrap{padding:0 20px}
-          .dre-hero{padding:48px 20px 36px}
-          .dre-grid{grid-template-columns:1fr}
-          .dre-calc{grid-template-columns:1fr}
-          .dre-hoods{grid-template-columns:1fr}
-          .dre-search{flex-direction:column}
-          .dre-search input,.dre-search select{min-width:0}
-        }
+        .dre-page{--bg:#0c1222;--surface:#141e30;--text:#e8ecf4;--muted:#8899b0;--blue:#3b82f6;--green:#10b981;--border:#1e2d44;font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+        .dre-hero{position:relative;height:65vh;min-height:420px;overflow:hidden}
+        .dre-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+        .dre-hero-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:2;background:linear-gradient(transparent 40%,var(--bg));padding:24px}
+        .dre-hero-overlay h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;letter-spacing:.12em;margin:0;text-transform:uppercase;text-shadow:0 0 40px #3b82f644}
+        .dre-hero-overlay p{font-size:1.25rem;color:var(--muted);margin:12px 0 28px}
+        .dre-hero-btn{background:var(--blue);color:#fff;border:none;padding:14px 32px;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;transition:background .2s}
+        .dre-hero-btn:hover{background:#2563eb}
+        .dre-content{max-width:1200px;margin:0 auto;padding:0 24px 64px}
+        .dre-filters{display:flex;gap:10px;flex-wrap:wrap;padding:40px 0 24px;align-items:center}
+        .dre-filters label{font-size:.9rem;color:var(--muted);margin-right:4px}
+        .dre-filters select{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:.9rem}
+        .dre-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+        .dre-prop{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface);transition:transform .15s,box-shadow .15s;will-change:transform}
+        .dre-prop:hover{box-shadow:0 12px 40px #3b82f622}
+        .dre-prop-img{height:160px;position:relative;display:flex;align-items:flex-start;justify-content:flex-end;padding:12px}
+        .dre-badge{background:var(--green);color:#fff;font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:4px;letter-spacing:.04em;text-transform:uppercase}
+        .dre-prop-body{padding:20px}
+        .dre-prop-body h3{font-size:1.2rem;font-weight:700;margin:0 0 4px}
+        .dre-addr{color:var(--muted);font-size:.9rem;margin:0 0 12px}
+        .dre-price{font-size:1.5rem;font-weight:800;color:var(--green)}
+        .dre-specs{display:flex;gap:16px;margin-top:12px;font-size:.85rem;color:var(--muted)}
+        .dre-empty{grid-column:1/-1;text-align:center;padding:48px;color:var(--muted)}
+        .dre-calc{padding:48px 0;border-top:1px solid var(--border);margin-top:48px}
+        .dre-calc h2{font-size:1.75rem;font-weight:700;margin:0 0 28px}
+        .dre-calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+        .dre-calc-inputs{display:flex;flex-direction:column;gap:20px}
+        .dre-calc-inputs label{display:flex;flex-direction:column;gap:8px;font-size:.9rem;color:var(--muted)}
+        .dre-calc-inputs strong{color:var(--text);font-size:1rem}
+        .dre-calc-inputs input[type=range]{width:100%;accent-color:var(--blue)}
+        .dre-term{display:flex;gap:10px;align-items:center;font-size:.9rem;color:var(--muted)}
+        .dre-term button{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 20px;border-radius:6px;cursor:pointer;font-size:.9rem}
+        .dre-term button.active{background:var(--blue);border-color:var(--blue);color:#fff}
+        .dre-calc-result{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;text-align:center}
+        .dre-calc-label{font-size:.9rem;color:var(--muted);display:block;margin-bottom:8px}
+        .dre-calc-amount{font-size:3rem;font-weight:800;color:var(--green);display:block;margin-bottom:20px}
+        .dre-calc-breakdown{display:flex;flex-direction:column;gap:6px;font-size:.85rem;color:var(--muted);text-align:left}
+        .dre-hoods{padding:48px 0;border-top:1px solid var(--border)}
+        .dre-hoods h2{font-size:1.75rem;font-weight:700;margin:0 0 24px}
+        .dre-hoods-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+        .dre-hood{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px}
+        .dre-hood h3{font-size:1.1rem;margin:0 0 8px}
+        .dre-hood p{color:var(--muted);font-size:.9rem;margin:0 0 16px;line-height:1.6}
+        .dre-hood-avg{font-size:.8rem;color:var(--muted)}.dre-hood-avg strong{color:var(--blue);font-size:1rem}
+        .dre-cta{text-align:center;padding:64px 0;border-top:1px solid var(--border)}
+        .dre-cta h2{font-size:1.75rem;margin:0 0 12px}
+        .dre-cta p{color:var(--muted);margin:0 0 24px}
+        @media(max-width:768px){.dre-grid{grid-template-columns:1fr}.dre-calc-grid{grid-template-columns:1fr}.dre-hoods-grid{grid-template-columns:1fr}.dre-hero{height:55vh;min-height:340px}}
       `}</style>
       <div className="dre-page">
-        <section className="dre-hero">
-          <span className="dre-hero-eyebrow">Horizon Realty</span>
-          <h1>Find your next <span>horizon.</span></h1>
-          <p>Premium properties. Expert guidance. Your journey starts here.</p>
-          <div className="dre-search">
-            <input type="text" placeholder="Search by name or address…" value={query} onChange={e => setQuery(e.target.value)} />
-            <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
-              {TYPES.map(t => <option key={t} value={t}>{t === "All" ? "All Types" : t}</option>)}
-            </select>
-            <select value={priceIdx} onChange={e => setPriceIdx(+e.target.value)}>
-              {PRICE_RANGES.map((r, i) => <option key={i} value={i}>{r.label}</option>)}
-            </select>
-            <button className="dre-search-btn" type="button">Search</button>
+        <div className="dre-hero">
+          <CityScene />
+          <div className="dre-hero-overlay">
+            <h1>Horizon Realty</h1>
+            <p>Find your next horizon.</p>
+            <button className="dre-hero-btn" onClick={()=>document.querySelector(".dre-filters")?.scrollIntoView({behavior:"smooth"})}>Explore Properties</button>
           </div>
-        </section>
-
-        <div className="dre-wrap">
-          <section className="dre-section">
-            <h2 className="dre-section-title">Featured Listings</h2>
-            <p className="dre-section-sub">{filtered.length} {filtered.length === 1 ? "property" : "properties"} found</p>
-            <div className="dre-grid">
-              {filtered.length ? filtered.map(p => <PropertyCard key={p.id} p={p} />) : <p className="dre-empty">No properties match your filters. Try adjusting your search.</p>}
-            </div>
+        </div>
+        <div className="dre-content">
+          <div className="dre-filters">
+            <label>Type:</label>
+            <select value={typeFilter} onChange={e=>setTypeFilter(e.target.value)}>
+              {["Any","House","Condo","Apartment","Townhouse"].map(t=><option key={t}>{t}</option>)}
+            </select>
+            <label>Price:</label>
+            <select value={rangeIdx} onChange={e=>setRangeIdx(+e.target.value)}>
+              {RANGES.map(([l],i)=><option key={i} value={i}>{l}</option>)}
+            </select>
+          </div>
+          <div className="dre-grid">
+            {filtered.length?filtered.map(p=><PropertyCard key={p.name} p={p}/>):<div className="dre-empty">No properties match your filters.</div>}
+          </div>
+          <MortgageCalc/>
+          <section className="dre-hoods">
+            <h2>Featured Neighborhoods</h2>
+            <div className="dre-hoods-grid">{HOODS.map(h=>(
+              <article key={h.name} className="dre-hood"><h3>{h.name}</h3><p>{h.desc}</p><span className="dre-hood-avg">AVG PRICE <strong>{h.avg}</strong></span></article>
+            ))}</div>
           </section>
-
-          <section className="dre-section">
-            <h2 className="dre-section-title">Mortgage Calculator</h2>
-            <p className="dre-section-sub">Estimate your monthly payment in real time.</p>
-            <div className="dre-calc">
-              <div className="dre-calc-inputs">
-                <div className="dre-field">
-                  <label>Home Price</label>
-                  <div className="dre-field-row">
-                    <input type="range" min={100000} max={3000000} step={10000} value={homePrice} onChange={e => setHomePrice(+e.target.value)} />
-                    <span className="dre-field-val">${fmt(homePrice)}</span>
-                  </div>
-                </div>
-                <div className="dre-field">
-                  <label>Down Payment</label>
-                  <div className="dre-field-row">
-                    <input type="range" min={0} max={50} step={1} value={downPct} onChange={e => setDownPct(+e.target.value)} />
-                    <span className="dre-field-val">{downPct}%</span>
-                  </div>
-                </div>
-                <div className="dre-field">
-                  <label>Interest Rate</label>
-                  <div className="dre-field-row">
-                    <input type="range" min={1} max={12} step={0.1} value={rate} onChange={e => setRate(+e.target.value)} />
-                    <span className="dre-field-val">{rate.toFixed(1)}%</span>
-                  </div>
-                </div>
-                <div className="dre-field">
-                  <label>Loan Term</label>
-                  <div className="dre-term-row">
-                    <button type="button" className="dre-term-btn" data-active={term === 15} onClick={() => setTerm(15)}>15 years</button>
-                    <button type="button" className="dre-term-btn" data-active={term === 30} onClick={() => setTerm(30)}>30 years</button>
-                  </div>
-                </div>
-              </div>
-              <div className="dre-result">
-                <p className="dre-result-label">Estimated Monthly Payment</p>
-                <p className="dre-result-amount">${fmt(Math.round(mortgage.total))}<span>/mo</span></p>
-                <div className="dre-breakdown">
-                  <div className="dre-breakdown-row"><span>Principal & Interest</span><span>${fmt(Math.round(mortgage.pi))}</span></div>
-                  <div className="dre-breakdown-row"><span>Property Tax (est.)</span><span>${fmt(Math.round(mortgage.tax))}</span></div>
-                  <div className="dre-breakdown-row"><span>Total Monthly</span><span>${fmt(Math.round(mortgage.total))}</span></div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="dre-section">
-            <h2 className="dre-section-title">Explore Neighborhoods</h2>
-            <p className="dre-section-sub">Discover the perfect community for your lifestyle.</p>
-            <div className="dre-hoods">
-              {NEIGHBORHOODS.map(n => (
-                <div key={n.name} className="dre-hood">
-                  <h3>{n.name}</h3>
-                  <p>{n.desc}</p>
-                  <span className="dre-hood-avg">{n.avg}<span>avg. price</span></span>
-                </div>
-              ))}
-            </div>
+          <section className="dre-cta">
+            <h2>Ready to find your home?</h2>
+            <p>Our agents are standing by to help you schedule a viewing.</p>
+            <button className="dre-hero-btn">Schedule a Viewing</button>
           </section>
         </div>
-
-        <section className="dre-cta">
-          <h2>Ready to find your home?</h2>
-          <p>Connect with our team for personalized property recommendations and private viewings.</p>
-          <a className="dre-cta-btn" href="mailto:hello@horizonrealty.demo">Schedule Viewing ↗</a>
-        </section>
-
-        <footer className="dre-footer">
-          <span>Horizon Realty — Demo Website</span>
-          <a href="/">Built by Romeo Vargas Jr. ↗</a>
-        </footer>
       </div>
     </DemoShell>
   );

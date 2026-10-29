@@ -1,255 +1,366 @@
-import React, { useState, useEffect, useRef } from "react";
+import { createScene, THREE } from "./three-setup.js";
+import React, { useEffect, useRef, useState } from "react";
 import DemoShell from "./DemoShell.jsx";
 
-const menu = {
+const MENU = {
   Starters: [
-    { name: "Truffle Burrata", price: 18, desc: "Creamy burrata with black truffle, heirloom tomatoes, and aged balsamic.", note: "Our burrata is flown in twice weekly from Puglia. Best paired with a glass of Vermentino." },
-    { name: "Seared Scallops", price: 24, desc: "Hokkaido scallops with cauliflower purée, pancetta crisp, and brown butter.", note: "Hand-dived scallops, seared to a golden crust. The cauliflower is roasted overnight for depth." },
-    { name: "Wild Mushroom Soup", price: 14, desc: "Porcini and chanterelle velouté with truffle oil and sourdough croutons.", note: "A house favorite since opening night. We forage our mushrooms from local woodlands each morning." },
-    { name: "Wagyu Tartare", price: 28, desc: "Hand-cut A5 wagyu with quail egg, capers, shallot, and house-made potato crisps.", note: "Sourced from Miyazaki prefecture. Prepared tableside on request for parties of two or more." },
+    { name: "Truffle Burrata", price: 18, desc: "Creamy burrata with black truffle shavings, heirloom tomatoes, and aged balsamic.", note: "Our burrata is flown in from Puglia twice a week." },
+    { name: "Seared Scallops", price: 24, desc: "Pan-seared diver scallops with cauliflower purée and brown butter.", note: "Dry-seared for a perfect golden crust — no oil." },
+    { name: "Wild Mushroom Soup", price: 14, desc: "Velvety blend of porcini, chanterelle, and shiitake with truffle oil.", note: "A recipe passed down from our founding chef." },
+    { name: "Wagyu Tartare", price: 28, desc: "Hand-cut A5 wagyu with quail egg, capers, and house-made brioche.", note: "Served at table temperature for maximum flavor." },
   ],
   Mains: [
-    { name: "Dry-Aged Ribeye", price: 62, desc: "45-day dry-aged prime ribeye, bone marrow butter, roasted garlic, and seasonal greens.", note: "Aged in our dedicated dry-aging room. Served medium-rare unless otherwise requested." },
-    { name: "Pan-Seared Halibut", price: 48, desc: "Wild halibut with saffron beurre blanc, fennel confit, and citrus gremolata.", note: "Line-caught and sustainably sourced. The saffron is hand-harvested from La Mancha." },
-    { name: "Braised Short Rib", price: 54, desc: "72-hour braised short rib with red wine reduction, celery root, and horseradish cream.", note: "Slow-braised for three full days. The wine reduction uses our sommelier's Barolo selection." },
-    { name: "Forest Risotto", price: 38, desc: "Carnaroli rice with wild mushrooms, aged parmesan, white truffle, and herbs.", note: "Stirred to order — allow 25 minutes. A beautiful vegetarian centrepiece worth the wait." },
+    { name: "Dry-Aged Ribeye", price: 62, desc: "45-day dry-aged prime ribeye with bone marrow butter and roasted garlic.", note: "Aged in our on-site dry-aging room." },
+    { name: "Pan-Seared Halibut", price: 48, desc: "Wild halibut with saffron beurre blanc, fennel, and citrus.", note: "Sustainably sourced from the North Atlantic." },
+    { name: "Braised Short Rib", price: 54, desc: "72-hour braised short rib with red wine reduction and celery root.", note: "Low and slow — the only way we know." },
+    { name: "Forest Risotto", price: 38, desc: "Carnaroli rice with wild mushrooms, aged parmesan, and white truffle.", note: "Stirred to order. Worth the wait." },
   ],
   Desserts: [
-    { name: "Crème Brûlée", price: 16, desc: "Tahitian vanilla bean custard with a caramelized sugar crust.", note: "Torched tableside. Our vanilla pods are sourced directly from a single estate in Tahiti." },
-    { name: "Dark Chocolate Fondant", price: 18, desc: "Valrhona 70% chocolate with a molten centre, served with salted caramel ice cream.", note: "Allow 14 minutes. The chocolate is single-origin from Venezuela — intense and bittersweet." },
-    { name: "Seasonal Fruit Tart", price: 15, desc: "Buttery pâte sucrée with pastry cream and market-fresh seasonal fruits.", note: "The fruits change weekly. Ask your server about tonight's selection." },
-    { name: "Cheese Selection", price: 22, desc: "Five artisan cheeses with honeycomb, quince paste, and walnut bread.", note: "Our fromager curates the board daily. Pairs beautifully with a glass of late-harvest Riesling." },
+    { name: "Crème Brûlée", price: 16, desc: "Classic Tahitian vanilla bean custard with caramelized sugar.", note: "Torched tableside for the perfect crack." },
+    { name: "Dark Chocolate Fondant", price: 18, desc: "Warm Valrhona chocolate cake with a molten center and salted caramel.", note: "Twelve minutes to perfection — we ask for your patience." },
+    { name: "Seasonal Fruit Tart", price: 15, desc: "Buttery pâte sucrée with pastry cream and market fruits.", note: "Changes with the seasons. Always a surprise." },
+    { name: "Cheese Selection", price: 22, desc: "Curated artisan cheeses with honeycomb, fig jam, and walnut bread.", note: "Five cheeses, sourced from small producers." },
   ],
   Drinks: [
-    { name: "Old Fashioned", price: 18, desc: "Woodford Reserve bourbon, Demerara sugar, Angostura bitters, orange zest.", note: "Stirred 40 times and served over a single hand-cut ice sphere. A timeless classic, done right." },
-    { name: "Signature Negroni", price: 20, desc: "Barrel-aged gin, Campari, sweet vermouth, and a flamed orange peel.", note: "We age our gin in-house in charred oak barrels for six weeks. Smoky, complex, unforgettable." },
-    { name: "Wine Flight", price: 32, desc: "Three curated 90ml pours selected by our sommelier to complement tonight's menu.", note: "The flight changes nightly. Ask about our reserve pairings for the full tasting experience." },
-    { name: "Espresso Martini", price: 19, desc: "Fresh espresso, Absolut vodka, Kahlúa, and vanilla syrup with a coffee bean garnish.", note: "Made with a double shot pulled to order. The perfect bridge between dinner and the evening ahead." },
+    { name: "Old Fashioned", price: 18, desc: "Woodford Reserve, Demerara sugar, Angostura bitters, orange zest.", note: "Stirred 40 times. No more, no less." },
+    { name: "Signature Negroni", price: 20, desc: "Barrel-aged gin, Campari, sweet vermouth, grapefruit twist.", note: "Our house barrel-aged blend — three weeks minimum." },
+    { name: "Wine Flight", price: 32, desc: "Three curated pours selected by our sommelier.", note: "Ask your server for tonight's selection." },
+    { name: "Espresso Martini", price: 19, desc: "Vodka, fresh espresso, coffee liqueur, vanilla.", note: "Made with beans roasted in-house that morning." },
   ],
 };
+const TABS = Object.keys(MENU);
+
+function ThreeHero() {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const { scene, camera, controls, start, dispose } = createScene(canvas, {
+      bloom: true, bloomStrength: 1.8, bloomRadius: 0.6, bloomThreshold: 0.6,
+      orbit: true, autoRotate: true, autoRotateSpeed: 0.3,
+      background: 0x0a0705, fog: 0.08, fov: 40, exposure: 1.0,
+    });
+
+    camera.position.set(2.5, 2, 3);
+    camera.lookAt(0, 0.8, 0);
+    controls.target.set(0, 0.8, 0);
+    controls.minDistance = 2;
+    controls.maxDistance = 6;
+    controls.maxPolarAngle = Math.PI / 2.1;
+    controls.minPolarAngle = 0.3;
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(20, 20),
+      new THREE.MeshStandardMaterial({ color: 0x0a0705, roughness: 0.8 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const table = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.5, 1.5, 0.08, 32),
+      new THREE.MeshStandardMaterial({ color: 0x2a1a10, roughness: 0.4, metalness: 0.1 })
+    );
+    table.position.y = 0.7;
+    table.castShadow = true;
+    table.receiveShadow = true;
+    scene.add(table);
+
+    for (let a = 0; a < 4; a++) {
+      const angle = (a / 4) * Math.PI * 2;
+      const leg = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.04, 0.66, 8),
+        new THREE.MeshStandardMaterial({ color: 0x1e1208, roughness: 0.5 })
+      );
+      leg.position.set(Math.cos(angle) * 1.1, 0.33, Math.sin(angle) * 1.1);
+      leg.castShadow = true;
+      scene.add(leg);
+    }
+
+    function makeGlass(x, z) {
+      const pts = [
+        new THREE.Vector2(0.0, 0.0),
+        new THREE.Vector2(0.12, 0.0),
+        new THREE.Vector2(0.12, 0.01),
+        new THREE.Vector2(0.02, 0.02),
+        new THREE.Vector2(0.02, 0.16),
+        new THREE.Vector2(0.04, 0.18),
+        new THREE.Vector2(0.10, 0.24),
+        new THREE.Vector2(0.11, 0.30),
+        new THREE.Vector2(0.10, 0.36),
+        new THREE.Vector2(0.07, 0.40),
+        new THREE.Vector2(0.065, 0.41),
+        new THREE.Vector2(0.07, 0.42),
+      ];
+      const glass = new THREE.Mesh(
+        new THREE.LatheGeometry(pts, 24),
+        new THREE.MeshPhysicalMaterial({
+          color: 0xffeedd, transmission: 0.92, roughness: 0.0, metalness: 0.0,
+          ior: 1.5, thickness: 0.5, transparent: true, opacity: 0.6, side: THREE.DoubleSide,
+        })
+      );
+      glass.position.set(x, 0.74, z);
+      glass.castShadow = true;
+      scene.add(glass);
+    }
+    makeGlass(-0.5, -0.3);
+    makeGlass(0.5, 0.2);
+
+    function makePlate(x, z) {
+      const plate = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25, 0.25, 0.015, 24),
+        new THREE.MeshStandardMaterial({ color: 0xf5f0e8, roughness: 0.2, metalness: 0.05 })
+      );
+      plate.position.set(x, 0.75, z);
+      plate.castShadow = true;
+      scene.add(plate);
+    }
+    makePlate(-0.5, 0.3);
+    makePlate(0.5, -0.3);
+
+    const candle = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.04, 0.2, 12),
+      new THREE.MeshStandardMaterial({ color: 0xf5e6c8, roughness: 0.6 })
+    );
+    candle.position.set(0, 0.84, 0);
+    scene.add(candle);
+
+    const flame = new THREE.Mesh(
+      new THREE.ConeGeometry(0.018, 0.07, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffaa33 })
+    );
+    flame.position.set(0, 0.97, 0);
+    scene.add(flame);
+
+    const candleLight = new THREE.PointLight(0xffaa33, 15, 5);
+    candleLight.position.set(0, 0.97, 0);
+    candleLight.castShadow = true;
+    candleLight.shadow.mapSize.set(512, 512);
+    scene.add(candleLight);
+
+    scene.add(new THREE.AmbientLight(0x1a0f08, 0.2));
+
+    const spot = new THREE.SpotLight(0xffd4a0, 20, 8, Math.PI / 5, 0.5);
+    spot.position.set(0, 4, 0);
+    spot.target.position.set(0, 0.7, 0);
+    spot.castShadow = true;
+    spot.shadow.mapSize.set(1024, 1024);
+    scene.add(spot);
+    scene.add(spot.target);
+
+    const EMBER_COUNT = 200;
+    const emberGeo = new THREE.BufferGeometry();
+    const emberPos = new Float32Array(EMBER_COUNT * 3);
+    const emberVel = new Float32Array(EMBER_COUNT);
+    for (let i = 0; i < EMBER_COUNT; i++) {
+      emberPos[i * 3] = (Math.random() - 0.5) * 4;
+      emberPos[i * 3 + 1] = Math.random() * 3 + 0.5;
+      emberPos[i * 3 + 2] = (Math.random() - 0.5) * 4;
+      emberVel[i] = 0.1 + Math.random() * 0.15;
+    }
+    emberGeo.setAttribute("position", new THREE.BufferAttribute(emberPos, 3));
+    const embers = new THREE.Points(emberGeo, new THREE.PointsMaterial({
+      color: 0xff8833, size: 0.02, transparent: true, opacity: 0.7, sizeAttenuation: true,
+    }));
+    scene.add(embers);
+
+    start((t) => {
+      candleLight.intensity = 15 + Math.sin(t * 8) * 3 + Math.sin(t * 13) * 2 + (Math.random() - 0.5) * 2;
+      flame.scale.y = 1 + Math.sin(t * 10) * 0.15;
+      flame.scale.x = 1 + Math.sin(t * 7) * 0.08;
+
+      const pos = emberGeo.attributes.position.array;
+      for (let i = 0; i < EMBER_COUNT; i++) {
+        pos[i * 3 + 1] += emberVel[i] * 0.01;
+        pos[i * 3] += Math.sin(t + i) * 0.0005;
+        pos[i * 3 + 2] += Math.cos(t + i * 0.7) * 0.0005;
+        if (pos[i * 3 + 1] > 4) {
+          pos[i * 3 + 1] = 0.5;
+          pos[i * 3] = (Math.random() - 0.5) * 4;
+          pos[i * 3 + 2] = (Math.random() - 0.5) * 4;
+        }
+      }
+      emberGeo.attributes.position.needsUpdate = true;
+    });
+
+    return dispose;
+  }, []);
+
+  return (
+    <div className="dr-hero">
+      <canvas ref={canvasRef} className="dr-canvas" />
+      <div className="dr-hero-overlay">
+        <h1>EMBER &amp; OAK</h1>
+        <p>Where flavor meets fire.</p>
+        <div className="dr-hero-cta">
+          <a href="#dr-menu" className="dr-btn">View Our Menu</a>
+          <a href="#dr-reserve" className="dr-btn dr-btn-outline">Reserve a Table</a>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Restaurant() {
   const [tab, setTab] = useState("Starters");
   const [expanded, setExpanded] = useState(null);
-  const [specialVisible, setSpecialVisible] = useState(false);
-  const specialRef = useRef(null);
-
-  useEffect(() => {
-    const el = specialRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setSpecialVisible(true); }, { threshold: 0.3 });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
+  const [form, setForm] = useState({ name: "", date: "", time: "7:00 PM", party: "2" });
 
   return (
     <DemoShell industry="Restaurant">
       <style>{`
-        .dr-page { --bg: #1a0f08; --surface: #241810; --accent: #e8843c; --gold: #d4a853; --cream: #f5e6d3; --muted: #b8a08a; --line: #3a2a1e; background: var(--bg); color: var(--cream); min-height: 100vh; font-family: "DM Sans", system-ui, sans-serif; overflow-x: hidden; }
-        .dr-serif { font-family: Georgia, "Times New Roman", serif; }
-
-        /* Hero */
-        .dr-hero { position: relative; min-height: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 24px; background: linear-gradient(180deg, #1a0f08 0%, #2a1a10 40%, #1a0f08 100%); overflow: hidden; }
-        .dr-hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 80%, #e8843c10 0%, transparent 60%); pointer-events: none; }
-        .dr-hero-name { font-family: Georgia, "Times New Roman", serif; font-size: clamp(3rem, 8vw, 6rem); letter-spacing: 0.18em; font-weight: 400; line-height: 1.1; position: relative; }
-        .dr-hero-line { width: 80px; height: 1px; background: var(--gold); margin: 24px auto; }
-        .dr-hero-tagline { font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.125rem, 2.5vw, 1.5rem); color: var(--muted); font-style: italic; letter-spacing: 0.04em; }
-        .dr-hero-actions { display: flex; gap: 16px; margin-top: 40px; flex-wrap: wrap; justify-content: center; }
-        .dr-btn { padding: 14px 28px; border-radius: 2px; font-size: 1rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: background 0.2s, color 0.2s, transform 0.2s; border: none; }
-        .dr-btn:active { transform: translateY(1px); }
-        .dr-btn-primary { background: var(--accent); color: #1a0f08; }
-        .dr-btn-primary:hover { background: #f09550; }
-        .dr-btn-secondary { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
-        .dr-btn-secondary:hover { background: #d4a85315; }
-
-        /* Embers */
-        .dr-ember { position: absolute; width: 4px; height: 4px; border-radius: 50%; bottom: 20%; opacity: 0; pointer-events: none; animation: dr-float 4s ease-out infinite; }
-        @keyframes dr-float { 0% { opacity: 0; transform: translateY(0) scale(1); } 15% { opacity: 0.8; } 70% { opacity: 0.3; } 100% { opacity: 0; transform: translateY(-35vh) scale(0.3); } }
-        .dr-ember:nth-child(1) { left: 15%; background: #e8843c; animation-delay: 0s; animation-duration: 5s; }
-        .dr-ember:nth-child(2) { left: 30%; background: #d4a853; animation-delay: 0.8s; animation-duration: 4.2s; }
-        .dr-ember:nth-child(3) { left: 50%; background: #e8843c; animation-delay: 1.6s; animation-duration: 5.5s; }
-        .dr-ember:nth-child(4) { left: 70%; background: #f0a050; animation-delay: 2.4s; animation-duration: 4.8s; }
-        .dr-ember:nth-child(5) { left: 85%; background: #d4a853; animation-delay: 3.2s; animation-duration: 5.2s; }
-        .dr-ember:nth-child(6) { left: 25%; background: #f0a050; animation-delay: 0.5s; animation-duration: 6s; }
-        .dr-ember:nth-child(7) { left: 60%; background: #e8843c; animation-delay: 2s; animation-duration: 4.5s; }
-        .dr-ember:nth-child(8) { left: 42%; background: #d4a853; animation-delay: 3.5s; animation-duration: 5.8s; }
-
-        /* Menu */
-        .dr-section { max-width: 1000px; margin: 0 auto; padding: 64px 24px; }
-        .dr-section-title { font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.75rem, 4vw, 2.5rem); text-align: center; margin-bottom: 8px; letter-spacing: 0.04em; }
-        .dr-section-sub { text-align: center; color: var(--muted); font-style: italic; margin-bottom: 40px; font-size: 1.125rem; }
-        .dr-tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 36px; flex-wrap: wrap; }
-        .dr-tab { padding: 10px 22px; border: 1px solid var(--line); border-radius: 2px; background: transparent; color: var(--muted); font-size: 1rem; letter-spacing: 0.04em; cursor: pointer; transition: all 0.2s; }
-        .dr-tab:hover { border-color: var(--accent); color: var(--cream); }
-        .dr-tab[aria-selected="true"] { background: var(--accent); color: #1a0f08; border-color: var(--accent); font-weight: 600; }
-        .dr-menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-        .dr-dish { padding: 24px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
-        .dr-dish:hover { transform: translateY(-3px); box-shadow: 0 8px 24px #e8843c15; border-color: #e8843c44; }
-        .dr-dish-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-        .dr-dish-name { font-family: Georgia, "Times New Roman", serif; font-size: 1.25rem; font-weight: 400; }
-        .dr-dish-price { color: var(--gold); font-size: 1.125rem; font-weight: 600; white-space: nowrap; }
-        .dr-dish-desc { color: var(--muted); margin-top: 8px; font-size: 1rem; line-height: 1.6; }
-        .dr-dish-note { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--gold); font-style: italic; font-size: 0.9375rem; line-height: 1.6; animation: dr-fadein 0.3s ease; }
-        @keyframes dr-fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-        .dr-dish-expand { font-size: 0.875rem; color: var(--accent); margin-top: 10px; display: block; }
-
-        /* Chef's Special */
-        .dr-special { background: linear-gradient(135deg, #2a1a10 0%, #1a0f08 100%); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-        .dr-special-inner { max-width: 800px; margin: 0 auto; padding: 72px 24px; text-align: center; opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
-        .dr-special-inner.visible { opacity: 1; transform: translateY(0); }
-        .dr-special-label { font-size: 1rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
-        .dr-special-dish { font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.5; margin-bottom: 12px; }
-        .dr-special-price { font-size: 1.5rem; color: var(--gold); font-weight: 600; }
-        .dr-special-note { color: var(--muted); font-style: italic; margin-top: 12px; font-size: 1rem; }
-
-        /* Ambiance */
-        .dr-ambiance-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .dr-ambiance-card { padding: 32px 24px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); text-align: center; transition: border-color 0.2s; }
-        .dr-ambiance-card:hover { border-color: var(--gold); }
+        .dr-page { background: #0f0906; color: #f5e6d3; font-family: "DM Sans", Arial, sans-serif; min-height: 100vh; }
+        .dr-page h1, .dr-page h2, .dr-page h3 { font-family: Georgia, "Times New Roman", serif; }
+        .dr-hero { position: relative; width: 100%; height: 65vh; min-height: 400px; overflow: hidden; }
+        .dr-canvas { width: 100%; height: 100%; display: block; }
+        .dr-hero-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; background: radial-gradient(ellipse at center, transparent 30%, #0a070588 80%); }
+        .dr-hero-overlay h1 { font-size: clamp(2.5rem, 7vw, 5rem); letter-spacing: 0.2em; color: #f5e6d3; margin: 0; text-shadow: 0 0 40px #e8843c66, 0 0 80px #e8843c33; font-weight: 400; }
+        .dr-hero-overlay > p { font-size: clamp(1rem, 2.5vw, 1.5rem); color: #d4a853; margin-top: 12px; font-style: italic; font-family: Georgia, serif; text-shadow: 0 0 20px #d4a85344; }
+        .dr-hero-cta { display: flex; gap: 16px; margin-top: 28px; pointer-events: auto; }
+        .dr-btn { padding: 14px 28px; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.25s; background: #e8843c; color: #0f0906; border: 1px solid #e8843c; text-decoration: none; }
+        .dr-btn:hover { background: #f0a060; border-color: #f0a060; transform: translateY(-2px); }
+        .dr-btn-outline { background: transparent; color: #f5e6d3; border-color: #d4a85388; }
+        .dr-btn-outline:hover { background: #d4a85322; border-color: #d4a853; color: #d4a853; }
+        .dr-section { max-width: 1100px; margin: 0 auto; padding: 64px 32px; }
+        .dr-section-title { text-align: center; margin-bottom: 40px; }
+        .dr-section-title h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); color: #f5e6d3; font-weight: 400; letter-spacing: 0.05em; }
+        .dr-section-title p { color: #b8a08a; margin-top: 8px; font-size: 1.125rem; }
+        .dr-divider { width: 60px; height: 1px; background: #d4a853; margin: 16px auto 0; }
+        .dr-tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; }
+        .dr-tab { padding: 10px 24px; border: 1px solid #3a2a1a; border-radius: 4px; background: transparent; color: #b8a08a; font-size: 1rem; cursor: pointer; transition: all 0.2s; font-family: Georgia, serif; }
+        .dr-tab:hover { border-color: #e8843c; color: #f5e6d3; }
+        .dr-tab.active { background: #e8843c22; border-color: #e8843c; color: #e8843c; }
+        .dr-dishes { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+        .dr-dish { background: #1a1008; border: 1px solid #2a1e12; border-radius: 8px; padding: 24px; cursor: pointer; transition: all 0.25s; }
+        .dr-dish:hover { border-color: #e8843c55; transform: translateY(-3px); box-shadow: 0 8px 30px #e8843c15; }
+        .dr-dish-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+        .dr-dish h3 { font-size: 1.125rem; color: #f5e6d3; margin: 0; font-weight: 400; }
+        .dr-dish-price { color: #d4a853; font-size: 1.125rem; font-weight: 600; white-space: nowrap; }
+        .dr-dish p { color: #998876; margin-top: 8px; font-size: 1rem; line-height: 1.6; }
+        .dr-dish-note { margin-top: 12px; padding-top: 12px; border-top: 1px solid #2a1e12; color: #d4a853; font-size: 0.9375rem; font-style: italic; font-family: Georgia, serif; }
+        .dr-special { background: linear-gradient(135deg, #1a1008, #241810); border: 1px solid #3a2a1a; border-radius: 12px; padding: 40px; text-align: center; margin-top: 48px; }
+        .dr-special-badge { display: inline-block; font-size: 0.875rem; letter-spacing: 0.12em; color: #d4a853; border: 1px solid #d4a85344; padding: 4px 16px; border-radius: 4px; margin-bottom: 20px; }
+        .dr-special h3 { font-size: 1.5rem; color: #f5e6d3; font-weight: 400; margin-bottom: 16px; }
+        .dr-special p { color: #b8a08a; max-width: 600px; margin: 0 auto; line-height: 1.8; }
+        .dr-special-price { display: block; color: #d4a853; font-size: 1.375rem; font-weight: 600; margin-top: 16px; }
+        .dr-ambiance { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .dr-ambiance-card { background: #1a1008; border: 1px solid #2a1e12; border-radius: 8px; padding: 32px; text-align: center; transition: all 0.25s; }
+        .dr-ambiance-card:hover { border-color: #d4a85355; transform: translateY(-3px); }
         .dr-ambiance-icon { font-size: 2rem; margin-bottom: 16px; display: block; }
-        .dr-ambiance-card h3 { font-family: Georgia, "Times New Roman", serif; font-size: 1.25rem; margin-bottom: 8px; }
-        .dr-ambiance-card p { color: var(--muted); font-size: 1rem; line-height: 1.6; }
-
-        /* Reservation */
-        .dr-reserve { background: linear-gradient(180deg, var(--bg), #2a1a10); border-top: 1px solid var(--line); }
-        .dr-form { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .dr-form-full { grid-column: 1 / -1; }
-        .dr-label { display: block; font-size: 0.875rem; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.04em; text-transform: uppercase; }
-        .dr-input { width: 100%; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 2px; color: var(--cream); font-size: 1rem; font-family: inherit; }
-        .dr-input:focus { outline: none; border-color: var(--gold); }
-        .dr-form .dr-btn { margin-top: 8px; width: 100%; }
-
-        /* Footer */
-        .dr-footer { max-width: 1000px; margin: 0 auto; padding: 24px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; color: var(--muted); font-size: 0.875rem; flex-wrap: wrap; gap: 12px; }
-
-        @media (max-width: 700px) {
-          .dr-menu-grid { grid-template-columns: 1fr; }
-          .dr-ambiance-grid { grid-template-columns: 1fr; }
-          .dr-form { grid-template-columns: 1fr; }
-          .dr-form-full { grid-column: 1; }
-          .dr-hero { min-height: 70vh; padding: 60px 20px; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .dr-ember { animation: none; display: none; }
-          .dr-special-inner { opacity: 1; transform: none; transition: none; }
+        .dr-ambiance-card h3 { font-size: 1.125rem; color: #f5e6d3; margin-bottom: 8px; font-weight: 400; }
+        .dr-ambiance-card p { color: #998876; font-size: 1rem; line-height: 1.6; }
+        .dr-reserve { background: #1a1008; border: 1px solid #2a1e12; border-radius: 12px; padding: 40px; max-width: 600px; margin: 0 auto; }
+        .dr-reserve-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .dr-field { display: flex; flex-direction: column; gap: 6px; }
+        .dr-field.full { grid-column: 1 / -1; }
+        .dr-field label { font-size: 0.875rem; color: #b8a08a; letter-spacing: 0.05em; }
+        .dr-field input, .dr-field select { background: #0f0906; border: 1px solid #3a2a1a; border-radius: 4px; padding: 12px; color: #f5e6d3; font-size: 1rem; font-family: inherit; outline: none; transition: border-color 0.2s; }
+        .dr-field input:focus, .dr-field select:focus { border-color: #d4a853; }
+        .dr-field select { cursor: pointer; }
+        .dr-submit { margin-top: 20px; width: 100%; padding: 16px; background: #e8843c; color: #0f0906; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .dr-submit:hover { background: #f0a060; }
+        .dr-footer { text-align: center; padding: 32px; color: #665544; font-size: 0.875rem; border-top: 1px solid #1a1008; }
+        @media (max-width: 600px) {
+          .dr-section { padding: 40px 20px; }
+          .dr-hero { height: 55vh; min-height: 350px; }
+          .dr-reserve-grid { grid-template-columns: 1fr; }
+          .dr-dishes { grid-template-columns: 1fr; }
+          .dr-special { padding: 28px 20px; }
         }
       `}</style>
       <div className="dr-page">
-        {/* Hero */}
-        <section className="dr-hero">
-          {Array.from({ length: 8 }, (_, i) => <span key={i} className="dr-ember" />)}
-          <h1 className="dr-hero-name">EMBER &amp; OAK</h1>
-          <div className="dr-hero-line" />
-          <p className="dr-hero-tagline">Where flavor meets fire.</p>
-          <div className="dr-hero-actions">
-            <a className="dr-btn dr-btn-primary" href="#dr-menu">View Our Menu</a>
-            <a className="dr-btn dr-btn-secondary" href="#dr-reserve">Reserve a Table</a>
-          </div>
-        </section>
-
-        {/* Menu */}
+        <ThreeHero />
         <section className="dr-section" id="dr-menu">
-          <h2 className="dr-section-title dr-serif">Our Menu</h2>
-          <p className="dr-section-sub">Seasonal ingredients, timeless technique.</p>
-          <div className="dr-tabs" role="tablist">
-            {Object.keys(menu).map(cat => (
-              <button key={cat} className="dr-tab" role="tab" aria-selected={tab === cat} onClick={() => { setTab(cat); setExpanded(null); }}>
-                {cat}
-              </button>
+          <div className="dr-section-title">
+            <h2>Our Menu</h2>
+            <p>Seasonally inspired, thoughtfully crafted</p>
+            <div className="dr-divider" />
+          </div>
+          <div className="dr-tabs">
+            {TABS.map(t => (
+              <button key={t} className={`dr-tab${tab === t ? " active" : ""}`} onClick={() => { setTab(t); setExpanded(null); }}>{t}</button>
             ))}
           </div>
-          <div className="dr-menu-grid">
-            {menu[tab].map((dish, i) => {
-              const key = `${tab}-${i}`;
-              const isOpen = expanded === key;
-              return (
-                <div key={key} className="dr-dish" onClick={() => setExpanded(isOpen ? null : key)} role="button" tabIndex={0} aria-expanded={isOpen} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(isOpen ? null : key); } }}>
-                  <div className="dr-dish-top">
-                    <span className="dr-dish-name">{dish.name}</span>
-                    <span className="dr-dish-price">${dish.price}</span>
-                  </div>
-                  <p className="dr-dish-desc">{dish.desc}</p>
-                  {isOpen && <p className="dr-dish-note">Chef's note: {dish.note}</p>}
-                  <span className="dr-dish-expand">{isOpen ? "Less ▴" : "Chef's note ▾"}</span>
+          <div className="dr-dishes">
+            {MENU[tab].map((d, i) => (
+              <div key={d.name} className="dr-dish" onClick={() => setExpanded(expanded === i ? null : i)}>
+                <div className="dr-dish-head">
+                  <h3>{d.name}</h3>
+                  <span className="dr-dish-price">${d.price}</span>
                 </div>
-              );
-            })}
+                <p>{d.desc}</p>
+                {expanded === i && <div className="dr-dish-note">{d.note}</div>}
+              </div>
+            ))}
           </div>
-        </section>
-
-        {/* Chef's Special */}
-        <section className="dr-special" ref={specialRef}>
-          <div className={`dr-special-inner${specialVisible ? " visible" : ""}`}>
-            <div className="dr-special-label">Tonight's Special</div>
-            <h2 className="dr-special-dish dr-serif">Herb-Crusted Rack of Lamb</h2>
-            <p className="dr-section-sub" style={{ marginBottom: 16 }}>with roasted garlic jus, seasonal vegetables, and truffle potato purée</p>
+          <div className="dr-special">
+            <span className="dr-special-badge">TONIGHT'S SPECIAL</span>
+            <h3>Herb-Crusted Rack of Lamb</h3>
+            <p>With roasted garlic jus, seasonal vegetables, and truffle potato purée. A celebration of simplicity and craft.</p>
             <span className="dr-special-price">$72</span>
-            <p className="dr-special-note">Available this evening while supplies last. Ask your server for wine pairing recommendations.</p>
           </div>
         </section>
-
-        {/* Ambiance */}
         <section className="dr-section">
-          <h2 className="dr-section-title dr-serif">The Experience</h2>
-          <p className="dr-section-sub">More than a meal — an evening to remember.</p>
-          <div className="dr-ambiance-grid">
+          <div className="dr-section-title">
+            <h2>The Experience</h2>
+            <p>More than a meal — an evening to remember</p>
+            <div className="dr-divider" />
+          </div>
+          <div className="dr-ambiance">
             <div className="dr-ambiance-card">
               <span className="dr-ambiance-icon">🕯</span>
               <h3>Private Dining</h3>
-              <p>An intimate space for up to 12 guests, with a bespoke menu crafted by our head chef for your occasion.</p>
+              <p>An intimate room for celebrations and gatherings of up to twelve, with a dedicated menu and sommelier.</p>
             </div>
             <div className="dr-ambiance-card">
               <span className="dr-ambiance-icon">🍷</span>
               <h3>Wine Cellar</h3>
-              <p>Over 400 labels curated by our sommelier. Enjoy a guided tasting in our temperature-controlled cellar room.</p>
+              <p>Over 400 labels curated by our sommelier. Old World and New World, with a focus on small producers.</p>
             </div>
             <div className="dr-ambiance-card">
               <span className="dr-ambiance-icon">🌿</span>
               <h3>Garden Terrace</h3>
-              <p>Dine under the stars on our candlelit terrace, surrounded by herbs we grow and use in tonight's dishes.</p>
+              <p>Dine under the stars on our candlelit terrace, surrounded by herbs we grow and use in the kitchen.</p>
             </div>
           </div>
         </section>
-
-        {/* Reservation */}
-        <section className="dr-reserve" id="dr-reserve">
-          <div className="dr-section">
-            <h2 className="dr-section-title dr-serif">Reserve Your Table</h2>
-            <p className="dr-section-sub">We look forward to welcoming you.</p>
-            <form className="dr-form" onSubmit={e => { e.preventDefault(); alert("This is a demo — no reservation was made."); }}>
-              <div>
-                <label className="dr-label" htmlFor="dr-date">Date</label>
-                <input className="dr-input" id="dr-date" type="date" required />
+        <section className="dr-section" id="dr-reserve">
+          <div className="dr-section-title">
+            <h2>Reserve Your Table</h2>
+            <p>We look forward to welcoming you</p>
+            <div className="dr-divider" />
+          </div>
+          <div className="dr-reserve">
+            <div className="dr-reserve-grid">
+              <div className="dr-field full">
+                <label>NAME</label>
+                <input type="text" placeholder="Your name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
               </div>
-              <div>
-                <label className="dr-label" htmlFor="dr-time">Time</label>
-                <select className="dr-input" id="dr-time" required defaultValue="">
-                  <option value="" disabled>Select a time</option>
-                  {["6:00 PM","6:30 PM","7:00 PM","7:30 PM","8:00 PM","8:30 PM","9:00 PM","9:30 PM","10:00 PM"].map(t => <option key={t} value={t}>{t}</option>)}
+              <div className="dr-field">
+                <label>DATE</label>
+                <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
+              </div>
+              <div className="dr-field">
+                <label>TIME</label>
+                <select value={form.time} onChange={e => setForm({ ...form, time: e.target.value })}>
+                  {["6:00 PM","6:30 PM","7:00 PM","7:30 PM","8:00 PM","8:30 PM","9:00 PM","9:30 PM","10:00 PM"].map(t => <option key={t}>{t}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="dr-label" htmlFor="dr-party">Party size</label>
-                <select className="dr-input" id="dr-party" required defaultValue="">
-                  <option value="" disabled>Guests</option>
-                  {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>{n} {n === 1 ? "guest" : "guests"}</option>)}
+              <div className="dr-field">
+                <label>PARTY SIZE</label>
+                <select value={form.party} onChange={e => setForm({ ...form, party: e.target.value })}>
+                  {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>{n} {n === 1 ? "Guest" : "Guests"}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="dr-label" htmlFor="dr-name">Name</label>
-                <input className="dr-input" id="dr-name" type="text" placeholder="Your name" required />
+              <div className="dr-field">
+                <label>OCCASION</label>
+                <select><option>Dinner</option><option>Birthday</option><option>Anniversary</option><option>Business</option><option>Other</option></select>
               </div>
-              <div className="dr-form-full">
-                <button className="dr-btn dr-btn-primary" type="submit">Confirm Reservation</button>
-              </div>
-            </form>
+            </div>
+            <button className="dr-submit" type="button">Confirm Reservation</button>
           </div>
         </section>
-
-        <footer className="dr-footer">
-          <span>Ember &amp; Oak — Demo Restaurant</span>
-          <span>A sample website by Romeo Vargas Jr.</span>
-        </footer>
+        <footer className="dr-footer">EMBER &amp; OAK — Fine dining, reimagined.</footer>
       </div>
     </DemoShell>
   );
