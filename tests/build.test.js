@@ -5,6 +5,24 @@ import { services } from "../src/data.js";
 
 const origin = "https://my-portfolio.romeovillegasvargas.workers.dev";
 
+test("search results receive a site name and a crawlable favicon", async () => {
+  const home = await readFile("dist/index.html", "utf8");
+  const schemas = [...home.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]));
+  const website = schemas.find(schema => schema["@type"] === "WebSite");
+  assert(website, "Homepage needs WebSite metadata for Google's site name");
+  assert.equal(website.name, "Romeo Vargas Jr.");
+  assert.equal(website.url, `${origin}/`);
+  for (const path of ["/", ...services.map(service => service.path)]) {
+    const html = await readFile(`dist${path}index.html`, "utf8");
+    assert.match(html, /<link\s+rel="icon"[^>]*href="\/favicon.png"/);
+    assert.match(html, /property="og:site_name" content="Romeo Vargas Jr\."/);
+  }
+  const icon = await readFile("dist/favicon.png");
+  assert.equal(icon.subarray(1, 4).toString(), "PNG");
+  assert.equal(icon.readUInt32BE(16), 96);
+  assert.equal(icon.readUInt32BE(20), 96);
+});
+
 test("search landing pages have canonical metadata and crawlable service links", async () => {
   const home = await readFile("dist/index.html", "utf8");
   assert(home.includes(`<link rel="canonical" href="${origin}/"`));

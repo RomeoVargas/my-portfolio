@@ -8,6 +8,7 @@ test("homepage service discovery works on desktop and mobile without runtime err
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     await expect(page.locator("h1")).toHaveCount(1);
+    await expect(page.locator("h1")).toContainText("Romeo Vargas Jr.");
     await expect(page.locator("h1")).toContainText("full-stack developer");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const links = page.locator('#capabilities a[href^="/services/"]');
